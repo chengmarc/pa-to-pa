@@ -18,7 +18,8 @@ python pa-to-pa.pyw          # python3 on macOS
 It does what's missing and opens the runs page at `http://127.0.0.1:8090`: the first time, it downloads this
 platform's llama.cpp and the model into `runtime/` (~6 GB, resumes if interrupted; on Windows a console window shows
 the progress); every time, it starts the Qwen3.5-9B server in the background if it isn't running. The page opens
-straight away, with a spinner on the model while it loads (about 10 s), then enables it. Pick five settings and press Run.
+straight away, with a spinner on the model while it loads (about 10 s), then enables it. Pick five settings and press
+Run.
 
 **Quit** on the page stops the page and the model server it started. Without a console, output and errors go to
 `appdata/logs/pa-to-pa.log`, and an error at launch shows in a message box.
