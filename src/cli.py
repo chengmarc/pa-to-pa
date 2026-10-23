@@ -59,8 +59,8 @@ def launch():
     if not llm.ready(MODEL):
         print(f"== Starting the {MODEL} server (log: appdata/logs/server-{MODEL}.log) ==")
         server = runtime.start(MODEL)
-    # Quit on the page stops the model server too, if this launch started it.
-    ui.main(on_quit=server.terminate if server else None)
+    # the page shows the model as starting until it has loaded, and Quit stops it too
+    ui.main(MODEL if server else None, server)
 
 
 def serve(argv):

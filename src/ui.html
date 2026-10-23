@@ -33,6 +33,18 @@
           padding: 4px 12px; font: inherit; cursor: pointer; }
   .pill[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
   .pill:disabled { opacity: .45; cursor: not-allowed; }
+  .pill.starting:disabled { opacity: .85; cursor: progress; }
+  .spinner { display: inline-block; width: 11px; height: 11px; margin-right: 7px; vertical-align: -1px;
+             border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+             animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation: pulse 1.6s ease-in-out infinite; border-right-color: currentColor; }
+  }
+  .booting { display: flex; align-items: center; gap: 2px; margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+             background: var(--pill); color: var(--text); }
+  .booting[hidden] { display: none; }
   .actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
   button.run { background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px;
                padding: 8px 22px; font: inherit; font-weight: 600; cursor: pointer; }
@@ -76,6 +88,7 @@
 
   <section class="panel">
     <div id="groups"></div>
+    <div class="booting" id="booting" role="status" aria-live="polite" hidden></div>
     <div class="actions">
       <button class="run" id="run">Run</button>
       <span class="msg" id="msg"></span>
@@ -110,21 +123,33 @@ const WHY_OFF = {   // a model's reason comes with it (o.why)
 function remember() { try { localStorage.setItem("pick", JSON.stringify(pick)); } catch (e) {} }
 function recall() { try { return JSON.parse(localStorage.getItem("pick")) || {}; } catch (e) { return {}; } }
 
+// Fetched on every check, drawn only when something changed: redrawing would restart the spinner.
 async function loadOptions() {
-  options = await (await fetch("/api/options")).json();
+  const fresh = await (await fetch("/api/options")).json();
+  const changed = JSON.stringify(fresh) !== JSON.stringify(options);
+  options = fresh;
+  if (changed) renderOptions();
+  refreshButton();
+}
+
+function renderOptions() {
   const saved = recall();
   $("groups").innerHTML = GROUPS.map(([key, label]) => {
     const values = options[kind(key)], ready = values.filter(o => o.ready).map(o => o.id);
     if (!ready.includes(pick[key])) pick[key] = ready.includes(saved[key]) ? saved[key] : (ready.length === 1 ? ready[0] : undefined);
-    const pills = values.map(o => `<button class="pill" data-key="${key}" data-value="${esc(o.id)}"
-        aria-pressed="${pick[key] === o.id}" title="${esc(o.ready ? o.id : o.why || WHY_OFF[kind(key)](o.id))}"
-        ${o.ready ? "" : "disabled"}>${esc(o.label)}</button>`).join("");
+    const pills = values.map(o => `<button class="${o.starting ? "pill starting" : "pill"}" data-key="${key}"
+        data-value="${esc(o.id)}" aria-pressed="${pick[key] === o.id}"
+        title="${esc(o.ready ? o.id : o.why || WHY_OFF[kind(key)](o.id))}" ${o.ready ? "" : "disabled"}
+        >${o.starting ? '<span class="spinner" aria-hidden="true"></span>' : ""}${esc(o.label)}</button>`).join("");
     return `<div class="group"><label>${label}</label><div class="pills">${pills}</div></div>`;
   }).join("");
   for (const b of document.querySelectorAll(".pill")) {
-    b.onclick = () => { pick[b.dataset.key] = b.dataset.value; remember(); loadOptions(); };
+    b.onclick = () => { pick[b.dataset.key] = b.dataset.value; remember(); renderOptions(); refreshButton(); };
   }
-  refreshButton();
+  const starting = options.model.filter(m => m.starting).map(m => m.label);
+  $("booting").hidden = !starting.length;
+  $("booting").innerHTML = starting.length ? '<span class="spinner" aria-hidden="true"></span>' +
+    `Starting ${esc(starting.join(", "))}: loading the model, usually about 10 s. You can pick settings meanwhile.` : "";
 }
 
 function refreshButton() {
@@ -134,7 +159,8 @@ function refreshButton() {
   $("run").textContent = busy ? "Running…" : "Run";
   if (busy) setMsg("");
   else if (missing.length) setMsg("Choose: " + missing.join(", "));
-  else if (down && down.length) setMsg(pick[down[0]] + " isn't running", true);
+  else if (down && down.length && (find(down[0], pick[down[0]]) || {}).starting) setMsg("Waiting for the model to load…");
+  else if (down && down.length) setMsg(lab(down[0], pick[down[0]]) + " isn't ready", true);
   else if (last && last.error) setMsg(last.error, true);
   else setMsg("");
 }
@@ -216,9 +242,10 @@ async function poll() {
   refreshButton();
   // a local model still loading (the launcher opens the page before it's ready) is checked again every few seconds
   const loading = options && options.model.some(m => m.local && !m.ready);
+  const starting = options && options.model.some(m => m.starting);
   if ((was && !busy) || loading) await loadOptions();
   clearTimeout(poll.t);
-  poll.t = setTimeout(poll, busy ? 1500 : loading ? 3000 : 10000);
+  poll.t = setTimeout(poll, busy || starting ? 1500 : loading ? 3000 : 10000);
 }
 
 $("quit").onclick = async () => {

@@ -18,7 +18,25 @@ from .paths import RESULTS
 ADDRESS = ("127.0.0.1", 8090)
 PAGE = Path(__file__).with_name("ui.html")
 state = {"busy": False, "error": None}   # the run in progress, if any, and why the last one failed to start or finish
-quitting = {"server": None, "on_quit": None}   # main()'s server, and what to stop with it
+page = {"server": None}   # main()'s server, for Quit
+launched = {"model": None, "process": None}   # the model server the launcher started for this page, if it did
+
+
+def options():
+    """run.options(), plus whether the model the launcher started is still starting: its process is alive but the
+    model isn't loaded yet. If the process has exited instead, the model's reason says so."""
+    opts = run.options()
+    for m in opts["model"]:
+        if m["id"] != launched["model"] or m["ready"]:
+            continue
+        code = launched["process"].poll()
+        if code is None:
+            m.update(starting=True, why="Starting: loading the model, usually about 10 s.")
+        else:
+            m["why"] = (f"The model server stopped while starting (exit code {code}); see "
+                        f"appdata/logs/server-{m['id']}.log. With too little free GPU memory it can't load: close "
+                        "GPU-heavy apps and launch again.")
+    return opts
 
 
 def runs():
@@ -59,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/":
             self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
         elif self.path == "/api/options":
-            self.send(200, run.options())
+            self.send(200, options())
         elif self.path == "/api/state":
             self.send(200, {**state, "runs": runs()})
         elif self.path.startswith("/results/"):
@@ -79,7 +97,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/api/run":
             return self.send(404, {"error": "not found"})
         settings = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
-        opts = run.options()
+        opts = options()
         ready = {k: [o["id"] for o in values if o["ready"]] for k, values in opts.items()}
         allowed = {**ready, "persuader_model": ready["model"], "persuadee_model": ready["model"]}
         bad = [k for k in run.SETTINGS if settings.get(k) not in allowed[k]]
@@ -96,19 +114,21 @@ class Handler(BaseHTTPRequestHandler):
         self.send(200, {"stopped": True})
 
         def stop():
-            if quitting["on_quit"]:
-                quitting["on_quit"]()
-            quitting["server"].shutdown()
+            if launched["process"]:
+                launched["process"].terminate()
+            page["server"].shutdown()
         threading.Thread(target=stop).start()
 
     def log_message(self, *args):
         pass   # no line per poll
 
 
-def main(on_quit=None):
-    """Serves the page until Quit (which also calls on_quit) or Ctrl+C."""
+def main(model=None, process=None):
+    """Serves the page until Quit or Ctrl+C. model and process: the model server the launcher started for the page,
+    shown as starting until it has loaded, and stopped by Quit."""
     server = ThreadingHTTPServer(ADDRESS, Handler)
-    quitting.update(server=server, on_quit=on_quit)
+    page["server"] = server
+    launched.update(model=model, process=process)
     url = f"http://{ADDRESS[0]}:{ADDRESS[1]}"
     print(f"Runs page at {url} (Quit on the page, or Ctrl+C, stops it)")
     webbrowser.open(url)
