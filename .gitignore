@@ -1,3 +1,17 @@
+# Fetched by scripts/fetch.ps1: llama.cpp and the models
+/src/runtime/
+
+# Made by scripts/fetch.ps1 on the way: unfinished downloads
+/build/
+
+# Written as the app runs: run logs (pa2pa-run, pa2pa-ui) and model-server logs (scripts/serve.ps1)
+/appdata/
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+
 # OS / editor
 .DS_Store
 Thumbs.db
@@ -5,27 +19,6 @@ desktop.ini
 .vscode/
 .idea/
 
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
-.ipynb_checkpoints/
-
-# Node
-node_modules/
-
 # Secrets
 .env
 *.key
-
-# Downloaded by scripts/fetch.ps1 (or copied from agent-2b): llama.cpp and the model
-/runtime/
-/model/
-/build/
-
-# Made by scripts/serve.ps1
-/logs/
-
-# Game logs from pa2pa.run
-/data/runs/

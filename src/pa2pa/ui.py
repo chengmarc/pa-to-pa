@@ -1,8 +1,8 @@
 """A local page for starting runs and reading their logs: pick the five settings, press Run.
 
-    python -m pa2pa.ui               # opens http://127.0.0.1:8090
+    pa2pa-ui                         # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as python -m pa2pa.run's, logged to data/runs/.
+One run at a time. Runs are the same as pa2pa-run's, logged to appdata/runs/.
 """
 import json
 import threading
@@ -60,7 +60,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/api/state":
             self.send(200, {**state, "runs": runs()})
         elif self.path.startswith("/runs/"):
-            # /runs/<folder>/<file>: a log, only from inside data/runs
+            # /runs/<folder>/<file>: a log, only from inside appdata/runs
             parts = self.path.split("/")[2:]
             path = run.RUNS.joinpath(*parts).resolve() if len(parts) == 2 else None
             if path and path.parent.parent == run.RUNS.resolve() and path.suffix in (".md", ".json") and path.is_file():

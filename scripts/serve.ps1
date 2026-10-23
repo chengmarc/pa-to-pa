@@ -1,7 +1,7 @@
 # Starts llama-server with one of the models, an OpenAI-compatible API, in this window. Ctrl+C stops it.
-# The log goes to logs\server-<model>.log.
+# The log goes to appdata\logs\server-<model>.log.
 #   powershell -ExecutionPolicy Bypass -File scripts\serve.ps1 [-Model qwen3.5-9b] [-Port N] [-Context N] [-Parallel N]
-# Each model has its own port, the one models.json names, so two can run at once (VRAM permitting): qwen3.5-9b on
+# Each model has its own port, the one src\models.json names, so two can run at once (VRAM permitting): qwen3.5-9b on
 # 8081, gpt-oss-20b on 8082. Not 8080, which is agent-2b's.
 param(
     [ValidateSet("qwen3.5-9b", "gpt-oss-20b")]
@@ -25,9 +25,9 @@ $m = $Models[$Model]
 if (-not $Port) { $Port = $m.Port }
 if (-not $Context) { $Context = $m.Context }
 if (-not $Parallel) { $Parallel = $m.Parallel }
-$Server = Join-Path $Root "runtime\llama\llama-server.exe"
-$Gguf = Join-Path $Root "model\$($m.File)"
-$Logs = Join-Path $Root "logs"
+$Server = Join-Path $Root "src\runtime\llama\llama-server.exe"
+$Gguf = Join-Path $Root "src\runtime\model\$($m.File)"
+$Logs = Join-Path $Root "appdata\logs"
 
 foreach ($f in @($Server, $Gguf)) {
     if (-not (Test-Path $f)) { Write-Host "Missing $f; run scripts\fetch.ps1 first." -ForegroundColor Red; exit 1 }

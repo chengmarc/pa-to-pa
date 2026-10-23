@@ -7,14 +7,13 @@ import json
 import os
 import sys
 import urllib.request
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from .paths import SRC
 
 
 def models():
     """models.json: {name: {url, template_kwargs, [api_key_env, model]}}."""
-    data = json.loads((ROOT / "models.json").read_text(encoding="utf-8"))
+    data = json.loads((SRC / "models.json").read_text(encoding="utf-8"))
     return {name: m for name, m in data.items() if not name.startswith("_")}
 
 

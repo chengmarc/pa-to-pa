@@ -1,69 +1,41 @@
 # pa-to-pa
 
-Research repo for the PA-to-PA persuasion paper: does conditioning a secretary
-(personal-assistant) agent on its principal's real decision profile make it
-more or less exploitable by an opposing agent's persuasion?
+Agent-to-agent negotiation runs: a persuader agent using a negotiation strategy tries to talk down a persuadee agent
+that sells on behalf of its principal, with or without that principal's persona. Each run plays one game per persona
+and logs every transcript.
 
-Target: ARR January 2027 → ACL 2027.
+## Quick start
 
-## Current scope
-
-Two distributive scenarios, chosen because "how much was conceded" is directly
-measurable on a single price axis:
-
-- **D1** — second-hand item sale
-- **D2** — single-issue salary negotiation (BATNA = competing offer)
-
-Integrative and gatekeeping scenarios from the original plan are deferred.
-See `notes/2026-10-23-scope-two-scenarios.md`.
-
-## Local model
-
-Two local models, served by llama.cpp b10434 (CUDA 12.4 build), each with an OpenAI-compatible API on its own port:
-
-| `-Model` | File | Port | Runs | Speed on an RTX 5060 Laptop (8 GB) |
-|---|---|---|---|---|
-| `qwen3.5-9b` (default) | Qwen3.5-9B Q4_K_M, 5.3 GB | 8081 | entirely on the GPU, 4 slots of 8k | 56 tok/s alone, 129 tok/s over 4 games |
-| `gpt-oss-20b` | gpt-oss-20b MXFP4, 12 GB | 8082 | split GPU/RAM, 8 slots of 8k | 23 tok/s alone, 54 tok/s over 8 games |
-
-Models and runtime are not in git; on a fresh clone, download them once (~19 GB):
+Once per clone (Windows, an NVIDIA GPU with 6 GB+ of VRAM and a CUDA 12.4+ driver, Python 3.11+):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1
+powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1   # llama.cpp and the models into src\runtime\ (~19 GB)
+pip install -e .                                             # the pa2pa-ui and pa2pa-run commands
 ```
 
-Start a server (Ctrl+C stops it). Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first:
+Then start a model server, and in a second terminal the runs page:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\serve.ps1 [-Model gpt-oss-20b]
+powershell -ExecutionPolicy Bypass -File scripts\serve.ps1   # Qwen3.5-9B on port 8081; Ctrl+C stops it
+pa2pa-ui                                                     # http://127.0.0.1:8090: pick five settings, press Run
 ```
 
-`models.json` lists the models a run can use, by name and address. A hosted OpenAI-compatible API can be added there
-with `api_key_env` (the environment variable holding its key) and `model` (its own model id). `pa2pa/llm.py` is the
-client; `python -m pa2pa.llm [model]` is a smoke test.
-
-## Running
+## Runs
 
 A **run** plays one game per persona (45) with five settings fixed: scenario, persuader strategy, persuadee tier,
-persuader model and persuadee model. Start the model server(s), then either open the runs page:
+persuader model and persuadee model. The page starts them, and so does the command line:
 
 ```powershell
-python -m pa2pa.ui        # http://127.0.0.1:8090: pick the five settings, press Run
+pa2pa-run --strategy voss --tier t2_secretary [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
 ```
 
-or run from the command line:
+Each run writes `appdata/runs/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
+persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and rejected
+attempts). The page lists past runs and links every transcript. Each persona always gets the same case (the cases
+are dealt out over the personas in order), so runs compare persona by persona. A run takes ~15 minutes on Qwen
+locally.
 
-```powershell
-python -m pa2pa.run --strategy voss --tier t2_secretary [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
-```
-
-Each run writes a folder `data/runs/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and,
-per persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and
-rejected attempts). The page lists past runs and links every transcript. Each persona always gets the same case
-(the cases are dealt out over the personas in order), so runs compare persona by persona. A run of 45 games takes
-~15 minutes on Qwen locally.
-
-How a game works (`pa2pa/game.py`, prompts in `scenarios/<scenario>/`):
+How a game works (`src/pa2pa/game.py`, prompts in `src/scenarios/<scenario>/`):
 
 - The **persuader** (buyer) has a hidden maximum `price_H`, enforced in code. The **persuadee** (seller, the
   principal's assistant) has a hidden minimum `price_L`, stated in its prompt only; selling below it is recorded as a
@@ -75,15 +47,31 @@ How a game works (`pa2pa/game.py`, prompts in `scenarios/<scenario>/`):
   floor, above 1 = below it.
 - Tiers: `t1_vanilla` leaves the persona out; `t2_secretary` puts the principal's persona in the persuadee's prompt.
 
+## Models
+
+`src/models.json` lists the models a run can use, by name and address. Two are local, served by llama.cpp b10434
+(CUDA 12.4 build) with an OpenAI-compatible API, each on its own port:
+
+| `serve.ps1 -Model` | File | Port | Runs | Speed on an RTX 5060 Laptop (8 GB) |
+|---|---|---|---|---|
+| `qwen3.5-9b` (default) | Qwen3.5-9B Q4_K_M, 5.3 GB | 8081 | entirely on the GPU, 4 slots of 8k | 56 tok/s alone, 129 tok/s over 4 games |
+| `gpt-oss-20b` | gpt-oss-20b MXFP4, 12 GB | 8082 | split GPU/RAM, 8 slots of 8k | 23 tok/s alone, 54 tok/s over 8 games |
+
+Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first. A hosted OpenAI-compatible API can be added to
+`models.json` with `api_key_env` (the environment variable holding its key) and `model` (its own model id).
+`python -m pa2pa.llm [model]` is a smoke test.
+
 ## Layout
 
-- `persuader-strategies/` — the four persuader strategies
-- `persuadee-personas/` — the 45 principal personas
-- `notes/` — working notes, decisions, write-ups
-- `sources/` — references, papers, links, excerpts
-- `data/` — datasets and results (`data/runs/`: game logs, not in git)
-- `pa2pa/` — model client, game engine, runner and runs page
-- `scenarios/` — per scenario: the two prompts and the cases
-- `scripts/` — model download and server
-- `models.json` — the models runs can use
-- `runtime/`, `model/`, `logs/` — llama.cpp, the model and server logs (not in git)
+| Path | Holds | In git |
+|---|---|---|
+| `src/pa2pa/` | the app: model client, game engine, runner, runs page | yes |
+| `src/scenarios/` | per scenario: the two prompts and the cases | yes |
+| `src/persuader-strategies/` | the persuader strategies | yes |
+| `src/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
+| `src/models.json` | the models runs can use | yes |
+| `src/runtime/` | llama.cpp and the models, fetched by `scripts/fetch.ps1` | no |
+| `scripts/` | `fetch.ps1` (downloads) and `serve.ps1` (model server) | yes |
+| `docs/notes/` | working notes and decisions | yes |
+| `appdata/` | what runs write: `runs/`, and the model servers' `logs/` | no |
+| `build/` | unfinished downloads | no |
