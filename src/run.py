@@ -6,7 +6,7 @@ persuadee tier, persuader model and persuadee model. The runs page (pa2pa-ui) st
 
 Each run gets a folder appdata/runs/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
 <persona>.md (the readable transcript) and <persona>.json (the full record, with reasoning and rejected attempts).
-Each persona always gets the same case: the cases are dealt out over the personas in order (p01 the first case, p02
+Each persona always gets the same case: the cases are dealt out over the personas in order (p_01 the first case, p_02
 the second, ...), so runs compare persona by persona.
 """
 import argparse

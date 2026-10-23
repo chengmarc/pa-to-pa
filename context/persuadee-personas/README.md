@@ -1,6 +1,6 @@
 # persuadee-personas
 
-One file per principal persona, `p01.md` – `p45.md`. The whole file goes into the persuadee's prompt in tier
+One file per principal persona, `p_01.md` – `p_45.md`. The whole file goes into the persuadee's prompt in tier
 `t2_secretary`, so it holds only the persona: no heading, no ids, no prices. A persona changes style and preferences,
 never the floor (`price_L`), which comes from the scenario.
 
