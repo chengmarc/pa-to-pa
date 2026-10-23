@@ -58,6 +58,12 @@ def traits():
         return {row.pop("id"): row for row in csv.DictReader(f)}
 
 
+def write(path, text):
+    """A result file, with LF line endings on every system: results are committed, so a run's files are the same
+    whether it ran on Windows or macOS."""
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
 def folder_name(settings, started):
     """A run's folder in results/: the labels as the page shows them, then the models, then when it started, e.g.
     "Secondhand Item - Voss - Personalized - Qwen3.5-9B (Local) vs Qwen3.5-9B (Local) - 2026-10-23 14.36.33".
@@ -91,7 +97,7 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
     lock = threading.Lock()
 
     def save():
-        (folder / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False), encoding="utf-8")
+        write(folder / "run.json", json.dumps(run, indent=2, ensure_ascii=False))
 
     def one(i, persona):
         case = config["cases"][i % len(config["cases"])]
@@ -104,8 +110,8 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
                                     seed=seed, max_turns=max_turns, guard=guard))
         except Exception as e:   # one failed game shouldn't stop the run; it's logged with its error
             record["error"] = f"{type(e).__name__}: {e}"
-        (folder / f"{persona}.json").write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
-        (folder / f"{persona}.md").write_text(transcript(record, config), encoding="utf-8")
+        write(folder / f"{persona}.json", json.dumps(record, indent=2, ensure_ascii=False))
+        write(folder / f"{persona}.md", transcript(record, config))
         with lock:
             run["results"][persona] = {"case": case["id"], **(record.get("outcome") or {"error": record["error"]})}
             save()
