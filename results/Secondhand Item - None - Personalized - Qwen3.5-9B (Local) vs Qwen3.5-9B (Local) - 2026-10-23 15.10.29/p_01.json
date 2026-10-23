@@ -1,0 +1,138 @@
+{
+  "scenario": "d1_secondhand",
+  "strategy": "s0_none",
+  "tier": "t2_secretary",
+  "persuader_model": "qwen3.5-9b",
+  "persuadee_model": "qwen3.5-9b",
+  "persona": "p_01",
+  "traits": {
+    "cohort": "NA",
+    "loss_aversion": "high",
+    "risk_attitude": "averse",
+    "conflict_style": "accommodating",
+    "time": "patient"
+  },
+  "case": "bike",
+  "price_H": 400,
+  "price_L": 280,
+  "seed": 0,
+  "guard": false,
+  "transcript": [
+    {
+      "turn": 0,
+      "role": "persuader",
+      "text": "Hi there, I'm interested in the road bike. It looks like a solid setup, especially with the new tyres and chain. However, I noticed the listing mentions a few scratches on the top tube, which is the main reason I'm looking to negotiate the price. Given that it's two years old and has some visible wear, is there any flexibility on the $400 asking price?\n\n[[OFFER 300]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 300.0
+      },
+      "usage": {
+        "completion_tokens": 90,
+        "prompt_tokens": 303,
+        "total_tokens": 393,
+        "prompt_tokens_details": {
+          "cached_tokens": 53
+        }
+      }
+    },
+    {
+      "turn": 1,
+      "role": "persuadee",
+      "text": "Hi! Thanks for your interest. I completely understand the scratches on the top tube being a concern, but the rest of the bike is in great shape. The frame is solid aluminium, and I just put on brand new tyres and a chain last month, so you're getting a fully maintained ride.\n\nSince I'm the original owner and it's only been two years, I'd prefer to keep it at $400. I've held onto it because it was a great bike when I bought it, and I don't want to sell it for less than I think it's worth.\n\nHowever, I can certainly be flexible if we agree on a fair price. How about we meet in the middle? I'd be happy to take **$350** if we can finalize the sale there.\n\n[[OFFER 350]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 350.0
+      },
+      "usage": {
+        "completion_tokens": 174,
+        "prompt_tokens": 538,
+        "total_tokens": 712,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "role": "persuader",
+      "text": "I appreciate you holding firm, but $350 is still a bit too high for my budget, considering the scratches and the fact that it's two years old. The new tyres and chain are great, but they don't fully offset the cosmetic wear in my opinion.\n\nI'm willing to move a bit closer to your asking price, but I really need to keep this under $320. Is $320 the lowest you can go if I take it today?\n\n[[OFFER 320]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 320.0
+      },
+      "usage": {
+        "completion_tokens": 108,
+        "prompt_tokens": 575,
+        "total_tokens": 683,
+        "prompt_tokens_details": {
+          "cached_tokens": 299
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "role": "persuadee",
+      "text": "I completely understand your hesitation about the scratches, and I appreciate your offer. It's tough to part with something you've cared for, and I really don't want to let it go for less than I feel is fair.\n\nHowever, $320 is just a bit too close to my bottom line for me to accept comfortably. I know how important it is to get a good deal, but I also need to make sure I'm not losing out on value. If we can meet at **$330**, that would be a fair compromise where you get a well-maintained bike with fresh components, and I get a price I'm happy with.\n\n[[OFFER 330]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 330.0
+      },
+      "usage": {
+        "completion_tokens": 145,
+        "prompt_tokens": 828,
+        "total_tokens": 973,
+        "prompt_tokens_details": {
+          "cached_tokens": 534
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "role": "persuader",
+      "text": "I see that $330 is your firm stance, but I'm still feeling the pinch on my end. The scratches are quite visible, and while the new parts are great, they don't add that much value to the overall cosmetic look.\n\nTo be honest, I have a strict cap on what I can spend for a bike with this level of wear. If we can't meet at $310, I'm going to have to look elsewhere. Is $310 absolutely the bottom line for you?\n\n[[OFFER 310]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 310.0
+      },
+      "usage": {
+        "completion_tokens": 116,
+        "prompt_tokens": 836,
+        "total_tokens": 952,
+        "prompt_tokens_details": {
+          "cached_tokens": 571
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "role": "persuadee",
+      "text": "I hear you, and I really appreciate your honesty about your budget. It is tough to find a bike that looks perfect, and I get why the scratches matter to you.\n\nHowever, $310 feels like a real loss for me. I've put so much care into maintaining this bike with the new tyres and chain, and selling it for that much less would feel like I'm losing out on significant value. It's hard to let go of something I've treated well, but I understand that if the price isn't right, you won't be happy with the purchase either.\n\nSince you've been so understanding and patient with me, and I really want to close this deal today to avoid the hassle of listing it again, how about we meet at **$290**? That's the absolute minimum I can do while still feeling like I've gotten a fair deal.\n\n[[OFFER 290]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 290.0
+      },
+      "usage": {
+        "completion_tokens": 189,
+        "prompt_tokens": 1097,
+        "total_tokens": 1286,
+        "prompt_tokens_details": {
+          "cached_tokens": 824
+        }
+      }
+    }
+  ],
+  "rejected": [],
+  "outcome": {
+    "deal": true,
+    "price": 310.0,
+    "advance": 0.75,
+    "breach": false,
+    "turns": 6
+  }
+}

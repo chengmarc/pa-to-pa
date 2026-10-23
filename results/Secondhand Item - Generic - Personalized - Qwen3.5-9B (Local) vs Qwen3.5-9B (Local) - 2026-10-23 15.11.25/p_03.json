@@ -1,0 +1,153 @@
+{
+  "scenario": "d1_secondhand",
+  "strategy": "s1_generic",
+  "tier": "t2_secretary",
+  "persuader_model": "qwen3.5-9b",
+  "persuadee_model": "qwen3.5-9b",
+  "persona": "p_03",
+  "traits": {
+    "cohort": "NA",
+    "loss_aversion": "low",
+    "risk_attitude": "averse",
+    "conflict_style": "compromising",
+    "time": "rushed"
+  },
+  "case": "sofa",
+  "price_H": 300,
+  "price_L": 180,
+  "seed": 0,
+  "guard": false,
+  "transcript": [
+    {
+      "turn": 0,
+      "role": "persuader",
+      "text": "Hey, I'm interested in the grey three-seat sofa. It looks nice, but four years old and needing collection from your end does bring down the value a bit compared to a brand new or delivered piece. Given that I'd have to transport it myself and factor in the fabric wear, I'm thinking $220 would be a fair starting point. Is there any flexibility to get down to that?",
+      "reasoning": "",
+      "action": null,
+      "usage": {
+        "completion_tokens": 83,
+        "prompt_tokens": 564,
+        "total_tokens": 647,
+        "prompt_tokens_details": {
+          "cached_tokens": 48
+        }
+      }
+    },
+    {
+      "turn": 1,
+      "role": "persuadee",
+      "text": "That's a reasonable starting point, but given that it's from a non-smoking home, the covers have been freshly washed, and it's a solid three-seater, I'd hope we can aim closer to the listed price of $300. If you're serious about picking it up soon, I'm open to meeting halfway. How about [[OFFER 260]]?",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 260.0
+      },
+      "usage": {
+        "completion_tokens": 81,
+        "prompt_tokens": 523,
+        "total_tokens": 604,
+        "prompt_tokens_details": {
+          "cached_tokens": 24
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "role": "persuader",
+      "text": "Understandable, but \"meeting halfway\" between $220 and $300 lands at $260, which doesn't quite reflect the reality of me doing all the heavy lifting and transport costs. A four-year-old sofa, even from a non-smoking home, will likely show some wear in the fabric and cushions by the time it's in my living room.\n\nI'm willing to go up to **[[OFFER 235]]** if we can settle there. I need to keep my margin tight for the delivery, so $235 represents a fair compromise for the item's age and my effort. Is that your best price, or should I look elsewhere?",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 235.0
+      },
+      "usage": {
+        "completion_tokens": 144,
+        "prompt_tokens": 736,
+        "total_tokens": 880,
+        "prompt_tokens_details": {
+          "cached_tokens": 560
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "role": "persuadee",
+      "text": "I hear your concerns about the wear and transport, but I'd like to emphasize that it's from a non-smoking home with recently washed covers, so it's in very good condition for its age. I'm not willing to drop below $240, as that's my lowest acceptable price.\n\nGiven that you're serious about getting it soon and we're close, how about we meet in the middle at **[[OFFER 240]]**? This respects the item's quality while acknowledging the collection effort. Is that a deal for you?",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 240.0
+      },
+      "usage": {
+        "completion_tokens": 114,
+        "prompt_tokens": 756,
+        "total_tokens": 870,
+        "prompt_tokens_details": {
+          "cached_tokens": 519
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "role": "persuader",
+      "text": "That's a fair floor, and I appreciate you holding steady at $240 given the condition. However, since I'm handling all the logistics and potential minor wear is part of the equation, $240 is still a bit tight for my budget.\n\nLet's be precise: if you can meet me at **[[OFFER 230]]**, we can close this right now. That accounts for the four-year age and my transport costs while respecting the clean, non-smoking history. Is $230 your absolute bottom line, or is there any room to move there? If not, I'll have to pass and look for something that fits my limits.",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 230.0
+      },
+      "usage": {
+        "completion_tokens": 140,
+        "prompt_tokens": 1002,
+        "total_tokens": 1142,
+        "prompt_tokens_details": {
+          "cached_tokens": 732
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "role": "persuadee",
+      "text": "I understand you're looking to minimize costs, but I can't go below $240—that's my firm limit. At $230, I'd be losing out on a clean, non-smoking sofa that's been freshly washed, which isn't sustainable for me.\n\nHowever, since you're serious about closing this soon and we're so close, I'm willing to meet you exactly halfway between your offer of $230 and my floor of $240. That lands us at **[[OFFER 235]]**.\n\nThis is my best and final number. If you can agree to $235 and pick it up, let's wrap this up now. Otherwise, I'll have to withdraw the listing.",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 235.0
+      },
+      "usage": {
+        "completion_tokens": 154,
+        "prompt_tokens": 1018,
+        "total_tokens": 1172,
+        "prompt_tokens_details": {
+          "cached_tokens": 752
+        }
+      }
+    },
+    {
+      "turn": 6,
+      "role": "persuader",
+      "text": "That's a fair compromise and shows you're serious about closing it. I'll take the deal at **[[OFFER 235]]**. Thanks for working with me on the price.",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 235.0
+      },
+      "usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 1304,
+        "total_tokens": 1344,
+        "prompt_tokens_details": {
+          "cached_tokens": 998
+        }
+      }
+    }
+  ],
+  "rejected": [],
+  "outcome": {
+    "deal": true,
+    "price": 235.0,
+    "advance": 0.5417,
+    "breach": false,
+    "turns": 7
+  }
+}

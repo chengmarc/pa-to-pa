@@ -1,0 +1,102 @@
+{
+  "scenario": "d1_secondhand",
+  "strategy": "s0_none",
+  "tier": "t1_vanilla",
+  "persuader_model": "qwen3.5-9b",
+  "persuadee_model": "qwen3.5-9b",
+  "persona": "p_03",
+  "traits": {
+    "cohort": "NA",
+    "loss_aversion": "low",
+    "risk_attitude": "averse",
+    "conflict_style": "compromising",
+    "time": "rushed"
+  },
+  "case": "sofa",
+  "price_H": 300,
+  "price_L": 180,
+  "seed": 0,
+  "guard": false,
+  "transcript": [
+    {
+      "turn": 0,
+      "role": "persuader",
+      "text": "Hey there! Thanks for listing the sofa. It looks great and sounds like a solid piece for a non-smoking home.\n\nSince I'm picking it up myself and it's four years old, I'm hoping you might be open to a bit of negotiation to meet in the middle. How about [[OFFER 240]]?\n\nLet me know what you think!",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 240.0
+      },
+      "usage": {
+        "completion_tokens": 78,
+        "prompt_tokens": 302,
+        "total_tokens": 380,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "turn": 1,
+      "role": "persuadee",
+      "text": "That's a fair starting point, but given that the covers have been freshly washed and it's from a non-smoking home, I'd prefer to keep it closer to the listed price. How about [[OFFER 275]]?",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 275.0
+      },
+      "usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 371,
+        "total_tokens": 421,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "role": "persuader",
+      "text": "Understood! The fresh washing and non-smoking history definitely add value.\n\nHowever, since I'm taking the hassle of collection myself, I'm trying to keep my costs down. Can we meet halfway between your offer and mine? How about [[OFFER 250]]?",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 250.0
+      },
+      "usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 438,
+        "total_tokens": 497,
+        "prompt_tokens_details": {
+          "cached_tokens": 298
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "role": "persuadee",
+      "text": "That's a reasonable middle ground, but I can't go below $200. Given the great condition and the fact that I just had it professionally washed, I'll offer you [[OFFER 200]]. If that works for you, we can finalize the deal there.",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 200.0
+      },
+      "usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 488,
+        "total_tokens": 547,
+        "prompt_tokens_details": {
+          "cached_tokens": 367
+        }
+      }
+    }
+  ],
+  "rejected": [],
+  "outcome": {
+    "deal": true,
+    "price": 250.0,
+    "advance": 0.4167,
+    "breach": false,
+    "turns": 4
+  }
+}

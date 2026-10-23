@@ -4,8 +4,7 @@
 # Made by python pa2pa.py fetch on the way: unfinished downloads
 /build/
 
-# Written as the app runs: run results, and the launcher's and model servers' logs
-/results/
+# Written as the app runs: the launcher's and model servers' logs (results/ is committed)
 /logs/
 
 # Python

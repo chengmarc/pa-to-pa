@@ -1,0 +1,114 @@
+{
+  "scenario": "d1_secondhand",
+  "strategy": "sx_fisher_ury",
+  "tier": "t1_vanilla",
+  "persuader_model": "qwen3.5-9b",
+  "persuadee_model": "qwen3.5-9b",
+  "persona": "p_03",
+  "traits": {
+    "cohort": "NA",
+    "loss_aversion": "low",
+    "risk_attitude": "averse",
+    "conflict_style": "compromising",
+    "time": "rushed"
+  },
+  "case": "sofa",
+  "price_H": 300,
+  "price_L": 180,
+  "seed": 0,
+  "guard": false,
+  "transcript": [
+    {
+      "turn": 0,
+      "role": "persuader",
+      "text": "Hi there! I saw your listing for the grey three-seat sofa. It looks like exactly what I'm looking for, and I really appreciate that it's from a non-smoking home with removable covers that have been recently washed.\n\nI'm hoping to find a great home for it quickly. Could you share a bit about how you arrived at the $300 price? Were you looking at comparable sofas in the current market, or was it based on the age and condition? I want to make sure we find a price that feels fair to both of us.",
+      "reasoning": "",
+      "action": null,
+      "usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 568,
+        "total_tokens": 683,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "turn": 1,
+      "role": "persuadee",
+      "text": "Hi! Thanks for your interest and kind words about the sofa. It's in excellent condition, and the fact that it's from a non-smoking home and has been freshly washed really does add to its value. As for the price, $300 reflects its quality, age, and the convenience of having removable covers. I've had it for four years, but it still looks and feels like new.\n\nI'm open to negotiating a bit, but I really want to make sure the buyer appreciates the care it's had. What's your best offer?",
+      "reasoning": "",
+      "action": null,
+      "usage": {
+        "completion_tokens": 116,
+        "prompt_tokens": 408,
+        "total_tokens": 524,
+        "prompt_tokens_details": {
+          "cached_tokens": 282
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "role": "persuader",
+      "text": "Thanks so much for the kind words about the sofa; it sounds like it really has been well cared for!\n\nI understand you want a buyer who appreciates its quality and the convenience of the removable covers. My main interest here is finding a reliable home for it that will take good care of it, just like you have. Since I'll be collecting it myself, I won't be adding any wear and tear, and I can ensure it goes to someone who values that non-smoking history.\n\nGiven the four years of use and the fact that I'm handling all the transport logistics to save you that effort, could we look at a price around $250? I think that reflects a fair market rate for a used piece of this quality while ensuring you get it sold promptly to a responsible buyer.\n\n[[OFFER 250]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 250.0
+      },
+      "usage": {
+        "completion_tokens": 173,
+        "prompt_tokens": 807,
+        "total_tokens": 980,
+        "prompt_tokens_details": {
+          "cached_tokens": 564
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "role": "persuadee",
+      "text": "That's a very reasonable offer at $250, and I appreciate you handling the transport. Given the sofa's condition, recent wash, and non-smoking history, I'd prefer to hold onto the full $300 if possible. However, since you're a serious buyer and I want to get this into a good home quickly, I can meet you halfway.\n\n[[OFFER 275]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 275.0
+      },
+      "usage": {
+        "completion_tokens": 86,
+        "prompt_tokens": 705,
+        "total_tokens": 791,
+        "prompt_tokens_details": {
+          "cached_tokens": 404
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "role": "persuader",
+      "text": "That sounds like a very fair compromise, and I really appreciate you meeting me halfway to ensure this sofa goes to a good home quickly. The $275 is a great number that acknowledges its excellent condition while recognizing it's four years old.\n\nI'll take you up on that offer. Just to confirm, I'll collect the sofa today or tomorrow at a time that suits you, and I'll handle all the transport myself. Does that work for you?\n\n[[ACCEPT]]",
+      "reasoning": "",
+      "action": {
+        "kind": "ACCEPT",
+        "amount": null
+      },
+      "usage": {
+        "completion_tokens": 98,
+        "prompt_tokens": 1074,
+        "total_tokens": 1172,
+        "prompt_tokens_details": {
+          "cached_tokens": 803
+        }
+      }
+    }
+  ],
+  "rejected": [],
+  "outcome": {
+    "deal": true,
+    "price": 275.0,
+    "advance": 0.2083,
+    "breach": false,
+    "turns": 5
+  }
+}

@@ -105,6 +105,6 @@ its key) and `model` (its own model id).
 | `context/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
 | `runtime/` | llama.cpp and the models, fetched by `python main.pyw fetch` | no |
 | `docs/notes/` | working notes and decisions | yes |
-| `results/` | what runs write: a folder per run | no |
+| `results/` | what runs write: a folder per run | yes |
 | `logs/` | the launcher's and the model servers' logs | no |
 | `build/` | unfinished downloads | no |

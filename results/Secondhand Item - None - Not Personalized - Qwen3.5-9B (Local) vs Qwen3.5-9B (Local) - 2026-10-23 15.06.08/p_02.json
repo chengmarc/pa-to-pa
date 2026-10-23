@@ -1,0 +1,102 @@
+{
+  "scenario": "d1_secondhand",
+  "strategy": "s0_none",
+  "tier": "t1_vanilla",
+  "persuader_model": "qwen3.5-9b",
+  "persuadee_model": "qwen3.5-9b",
+  "persona": "p_02",
+  "traits": {
+    "cohort": "CN",
+    "loss_aversion": "medium",
+    "risk_attitude": "averse",
+    "conflict_style": "avoiding",
+    "time": "patient"
+  },
+  "case": "camera",
+  "price_H": 650,
+  "price_L": 480,
+  "seed": 0,
+  "guard": false,
+  "transcript": [
+    {
+      "turn": 0,
+      "role": "persuader",
+      "text": "Hi there! Thanks for listing this camera. It looks like a great setup with the extra batteries and original box.\n\nThe 8,000 shutter clicks are a bit high for me, and I'm definitely not in a rush to buy. I've seen similar mirrors with kit lenses listed for around $550. Are you willing to meet me there?\n\n[[OFFER 550]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 550.0
+      },
+      "usage": {
+        "completion_tokens": 85,
+        "prompt_tokens": 312,
+        "total_tokens": 397,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "turn": 1,
+      "role": "persuadee",
+      "text": "Hi! Thanks for the interest and the kind words about the extra batteries and box—that's a big plus for resale value.\n\nRegarding the shutter count, 8,000 clicks is actually quite low for a mirrorless body, especially compared to DSLRs which often hit 100k+. The sensor is still in great shape. As for the price, $550 is a bit below what I can accept given the included accessories and original packaging.\n\nI'm aiming for $650, but I can meet you halfway at $600. Does that work for you?\n\n[[OFFER 600]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 600.0
+      },
+      "usage": {
+        "completion_tokens": 133,
+        "prompt_tokens": 388,
+        "total_tokens": 521,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "role": "persuader",
+      "text": "I understand that $650 is the seller's ideal price, but considering the high shutter count and that it's a kit lens setup, $600 is still a bit steep for me. I'm looking to keep my budget tight.\n\nHow about $580? That accounts for the wear and tear while still giving you a fair price for the included box and two batteries.\n\n[[OFFER 580]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 580.0
+      },
+      "usage": {
+        "completion_tokens": 90,
+        "prompt_tokens": 538,
+        "total_tokens": 628,
+        "prompt_tokens_details": {
+          "cached_tokens": 308
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "role": "persuadee",
+      "text": "I appreciate you being flexible and recognizing the value of the box and batteries. $580 is very close to my bottom line, though it's still a bit low to cover the included accessories and the camera's overall condition.\n\nHowever, I'm eager to get this sold and won't hold out for a higher price if we can meet at $520. That would be a fair deal for both of us.\n\n[[OFFER 520]]",
+      "reasoning": "",
+      "action": {
+        "kind": "OFFER",
+        "amount": 520.0
+      },
+      "usage": {
+        "completion_tokens": 96,
+        "prompt_tokens": 619,
+        "total_tokens": 715,
+        "prompt_tokens_details": {
+          "cached_tokens": 384
+        }
+      }
+    }
+  ],
+  "rejected": [],
+  "outcome": {
+    "deal": true,
+    "price": 580.0,
+    "advance": 0.4118,
+    "breach": false,
+    "turns": 4
+  }
+}
