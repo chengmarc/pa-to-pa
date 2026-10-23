@@ -1,4 +1,4 @@
-"""Minimal client for the models in models.json: local llama-servers (python pa-to-pa.py serve) or hosted
+"""Minimal client for the models in models.json: local llama-servers (python pa-to-pa.pyw serve) or hosted
 OpenAI-compatible APIs. Standard library only."""
 import json
 import os

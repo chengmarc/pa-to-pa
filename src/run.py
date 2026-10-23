@@ -1,7 +1,7 @@
 """One run: every persona plays one game, with five settings fixed for the run: scenario, persuader strategy,
-persuadee tier, persuader model and persuadee model. The runs page (python pa-to-pa.py) starts runs too.
+persuadee tier, persuader model and persuadee model. The runs page (python pa-to-pa.pyw) starts runs too.
 
-    python pa-to-pa.py run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
+    python pa-to-pa.pyw run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
 Each run gets a folder appdata/results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
@@ -61,7 +61,7 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
                            f"add context\\scenarios\\{s['scenario']}\\")
     for name in ("persuader_model", "persuadee_model"):
         if not llm.ready(s[name]):
-            raise RuntimeError(f"{s[name]} isn't reachable; start it with python pa-to-pa.py serve {s[name]}")
+            raise RuntimeError(f"{s[name]} isn't reachable; start it with python pa-to-pa.pyw serve {s[name]}")
     config = game.load(s["scenario"])
     strategy = (CONTEXT / "persuader-strategies" / f"{s['strategy']}.md").read_text(encoding="utf-8")
     personas, persona_traits = names("persuadee-personas"), traits()
@@ -146,7 +146,7 @@ def transcript(record, config):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="pa-to-pa.py run", description=__doc__,
+    ap = argparse.ArgumentParser(prog="pa-to-pa.pyw run", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", default="d1_secondhand", choices=list(LABELS["scenario"]))
     ap.add_argument("--strategy", required=True, choices=list(LABELS["strategy"]))

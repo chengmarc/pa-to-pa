@@ -1,5 +1,5 @@
 {
-  "_note": "Models a run can use, by name. url: an OpenAI-compatible API base. template_kwargs: chat-template variables sent with every request (the thinking switch). A hosted API also needs api_key_env (the environment variable holding its key) and model (its own model id). local: a model served from runtime/ (python pa-to-pa.py serve), which listens on url's port: its file, where python pa-to-pa.py fetch downloads it from (pinned to one revision) and its size, the context and slots it's served with, and llama-server's placement arguments.",
+  "_note": "Models a run can use, by name. url: an OpenAI-compatible API base. template_kwargs: chat-template variables sent with every request (the thinking switch). A hosted API also needs api_key_env (the environment variable holding its key) and model (its own model id). local: a model served from runtime/ (python pa-to-pa.pyw serve), which listens on url's port: its file, where python pa-to-pa.pyw fetch downloads it from (pinned to one revision) and its size, the context and slots it's served with, and llama-server's placement arguments.",
   "qwen3.5-9b": {
     "url": "http://127.0.0.1:8081/v1",
     "template_kwargs": {"enable_thinking": false},

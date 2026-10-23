@@ -19,7 +19,11 @@
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
+  button.quit { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 8px;
+                padding: 6px 14px; font: inherit; cursor: pointer; }
+  button.quit:hover { color: var(--bad); border-color: var(--bad); }
   .sub { color: var(--muted); margin: 0 0 20px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
   .group { display: grid; grid-template-columns: 150px 1fr; gap: 8px; align-items: start; padding: 6px 0; }
@@ -62,8 +66,13 @@
 </head>
 <body>
 <main>
-  <h1>PA-to-PA runs</h1>
-  <p class="sub">Each run plays one game per persona with these five settings.</p>
+  <header>
+    <div>
+      <h1>PA-to-PA runs</h1>
+      <p class="sub">Each run plays one game per persona with these five settings.</p>
+    </div>
+    <button class="quit" id="quit" title="Stop this page and the model server it started">Quit</button>
+  </header>
 
   <section class="panel">
     <div id="groups"></div>
@@ -94,7 +103,8 @@ const kind = key => key.endsWith("_model") ? "model" : key;
 const find = (key, id) => options && (options[kind(key)] || []).find(o => o.id === id);
 const lab = (key, id) => (find(key, id) || {label: id}).label;   // a run from before a rename shows its id
 const WHY_OFF = {
-  model: id => `Not running: start it with python pa-to-pa.py serve ${id}`,
+  model: id => `Not running yet: it loads in about 10 s after launch (log: appdata/logs/server-${id}.log). ` +
+              `To start it by hand: python pa-to-pa.pyw serve ${id}`,
   scenario: id => `Not built yet: add context\\scenarios\\${id}\\`,
   strategy: id => `Not written yet: add context\\persuader-strategies\\${id}.md`,
 };
@@ -206,10 +216,20 @@ async function poll() {
   busy = last.busy;
   render();
   refreshButton();
-  if (was && !busy) loadOptions();
+  // a model still loading (the launcher opens the page before it's ready) is checked again every few seconds
+  const loading = options && options.model.some(m => !m.ready);
+  if ((was && !busy) || loading) await loadOptions();
   clearTimeout(poll.t);
-  poll.t = setTimeout(poll, busy ? 1500 : 10000);
+  poll.t = setTimeout(poll, busy ? 1500 : loading ? 3000 : 10000);
 }
+
+$("quit").onclick = async () => {
+  const res = await fetch("/api/quit", {method: "POST"});
+  if (!res.ok) return setMsg((await res.json()).error, true);
+  clearTimeout(poll.t);
+  document.querySelector("main").innerHTML =
+    '<h1>PA-to-PA runs</h1><p class="sub">Stopped, with the model server it started. You can close this tab.</p>';
+};
 
 loadOptions().then(poll);
 </script>

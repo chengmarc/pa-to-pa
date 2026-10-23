@@ -1,12 +1,13 @@
 """PA-to-PA, run with Python 3.11+ on Windows or macOS. Nothing to install: the app is standard library only.
 
-    python pa-to-pa.py                         set up what's missing, start the model server, open the runs page
-    python pa-to-pa.py run --strategy ... --tier ...   one run from the command line (run --help for the options)
-    python pa-to-pa.py serve [model]           serve a local model in this window, until Ctrl+C (default qwen3.5-9b)
-    python pa-to-pa.py fetch                   download llama.cpp and the models into runtime/ (~19 GB)
+    python pa-to-pa.pyw                     set up what's missing, start the model server, open the runs page
+    python pa-to-pa.pyw run --strategy ... --tier ...   one run from the command line (run --help for the options)
+    python pa-to-pa.pyw serve [model]       serve a local model in this window, until Ctrl+C (default qwen3.5-9b)
+    python pa-to-pa.pyw fetch               download llama.cpp and the models into runtime/ (~6 GB)
 """
 import argparse
-import time
+import contextlib
+import sys
 import urllib.request
 import webbrowser
 
@@ -23,32 +24,47 @@ def up(url):
         return False
 
 
+@contextlib.contextmanager
+def console():
+    """A console window for a while, when there's none (a double-clicked .pyw on Windows): the first-time download
+    shows its progress there."""
+    if sys.platform != "win32" or sys.__stdout__ is not None:
+        yield
+        return
+    import ctypes
+    ctypes.windll.kernel32.AllocConsole()
+    saved = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = open("CONOUT$", "w", encoding="utf-8", buffering=1)
+    try:
+        yield
+    finally:
+        sys.stdout.close()
+        sys.stdout, sys.stderr = saved
+        ctypes.windll.kernel32.FreeConsole()
+
+
 def launch():
-    """Each step is skipped when it's already done, so this is safe to run any time."""
+    """Each step is skipped when it's already done, so this is safe to run any time. The page opens straight away and
+    enables the model once it has loaded."""
     page = f"http://{ui.ADDRESS[0]}:{ui.ADDRESS[1]}"
     if up(page):
         print("The runs page is already running.")
         webbrowser.open(page)
         return
     if not runtime.fetched(MODEL):
-        print("== Downloading llama.cpp and the models (~19 GB, first time only) ==")
-        runtime.fetch()
+        with console():
+            print("== Downloading llama.cpp and the models (~6 GB, first time only) ==")
+            runtime.fetch()
+    server = None
     if not llm.ready(MODEL):
-        print(f"== Starting the {MODEL} server; it keeps running after the page stops ==")
-        runtime.start(MODEL)
-        deadline = time.monotonic() + 180
-        while not llm.ready(MODEL):
-            if time.monotonic() > deadline:
-                raise SystemExit(f"The model server didn't come up in 3 minutes; see appdata/logs/server-{MODEL}.log. "
-                                 "With too little free GPU memory it fails to load: close GPU-heavy apps and retry.")
-            print(".", end="", flush=True)
-            time.sleep(2)
-        print(" loaded.")
-    ui.main()
+        print(f"== Starting the {MODEL} server (log: appdata/logs/server-{MODEL}.log) ==")
+        server = runtime.start(MODEL)
+    # Quit on the page stops the model server too, if this launch started it.
+    ui.main(on_quit=server.terminate if server else None)
 
 
 def serve(argv):
-    ap = argparse.ArgumentParser(prog="pa-to-pa.py serve", description="Serve a local model in this window.")
+    ap = argparse.ArgumentParser(prog="pa-to-pa.pyw serve", description="Serve a local model in this window.")
     ap.add_argument("model", nargs="?", default=MODEL, choices=list(runtime.local_models()))
     ap.add_argument("--context", type=int, help="tokens, shared by the slots (default: the model's in models.json)")
     ap.add_argument("--parallel", type=int, help="slots: games served at once (default: the model's)")

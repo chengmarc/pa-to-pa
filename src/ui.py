@@ -1,8 +1,9 @@
 """A local page for starting runs and reading their logs: pick the five settings, press Run.
 
-    python pa-to-pa.py                  # opens http://127.0.0.1:8090
+    python pa-to-pa.pyw                 # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as python pa-to-pa.py run's, logged to appdata/results/.
+One run at a time. Runs are the same as python pa-to-pa.pyw run's, logged to appdata/results/. Quit on the page stops
+it, and the model server the launcher started for it; with no window to close, that's how it stops.
 """
 import json
 import threading
@@ -17,6 +18,7 @@ from .paths import RESULTS
 ADDRESS = ("127.0.0.1", 8090)
 PAGE = Path(__file__).with_name("ui.html")
 state = {"busy": False, "error": None}   # the run in progress, if any, and why the last one failed to start or finish
+quitting = {"server": None, "on_quit": None}   # main()'s server, and what to stop with it
 
 
 def runs():
@@ -72,6 +74,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send(404, {"error": "not found"})
 
     def do_POST(self):
+        if self.path == "/api/quit":
+            return self.quit()
         if self.path != "/api/run":
             return self.send(404, {"error": "not found"})
         settings = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
@@ -86,14 +90,27 @@ class Handler(BaseHTTPRequestHandler):
         launch({k: settings[k] for k in run.SETTINGS})
         self.send(202, {"started": True})
 
+    def quit(self):
+        if state["busy"]:
+            return self.send(409, {"error": "a run is in progress; quit when it's done"})
+        self.send(200, {"stopped": True})
+
+        def stop():
+            if quitting["on_quit"]:
+                quitting["on_quit"]()
+            quitting["server"].shutdown()
+        threading.Thread(target=stop).start()
+
     def log_message(self, *args):
         pass   # no line per poll
 
 
-def main():
+def main(on_quit=None):
+    """Serves the page until Quit (which also calls on_quit) or Ctrl+C."""
     server = ThreadingHTTPServer(ADDRESS, Handler)
+    quitting.update(server=server, on_quit=on_quit)
     url = f"http://{ADDRESS[0]}:{ADDRESS[1]}"
-    print(f"Runs page at {url} (Ctrl+C stops it)")
+    print(f"Runs page at {url} (Quit on the page, or Ctrl+C, stops it)")
     webbrowser.open(url)
     try:
         server.serve_forever()
