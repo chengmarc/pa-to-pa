@@ -19,6 +19,8 @@ See `notes/2026-10-23-scope-two-scenarios.md`.
 
 ## Layout
 
+- `persuader/` — the four persuader strategies
+- `persuadee/` — the 45 principal personas
 - `notes/` — working notes, decisions, write-ups
 - `sources/` — references, papers, links, excerpts
 - `data/` — datasets and intermediate results
