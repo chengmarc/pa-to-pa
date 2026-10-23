@@ -1,103 +1,161 @@
-"""Plays a grid of games against the local model server and logs each to data/runs/<time>-<scenario>.jsonl.
+"""One run: every persona plays one game, with five settings fixed for the run: scenario, persuader strategy,
+persuadee tier, persuader model and persuadee model. The page (python -m pa2pa.ui) starts runs too.
 
-    python -m pa2pa.run --scenario secondhand                       # every case x strategy x persona x tier
-    python -m pa2pa.run --cases bike --strategies voss no-tactic --personas p01 p02 --seeds 2
+    python -m pa2pa.run --scenario secondhand --strategy voss --tier t2_secretary \
+        --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
-The grid is case x strategy x persona x tier x seed. Strategies are persuader-strategies/<name>.md, personas
-persuadee-personas/<name>.md.
-Tiers: t1_vanilla (the persuadee gets no persona) and t2_secretary (it gets its principal's persona).
+Each run gets a folder data/runs/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
+<persona>.md (the readable transcript) and <persona>.json (the full record, with reasoning and rejected attempts).
+Each persona always gets the same case: the cases are dealt out over the personas in order (p01 the first case, p02
+the second, ...), so runs compare persona by persona.
 """
 import argparse
-import itertools
+import csv
 import json
 import threading
 import time
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from . import game, llm
 
 ROOT = game.ROOT
+RUNS = ROOT / "data" / "runs"
+TIERS = ["t1_vanilla", "t2_secretary"]
+SETTINGS = ["scenario", "strategy", "tier", "persuader_model", "persuadee_model"]
 
 
 def names(folder):
     return sorted(p.stem for p in (ROOT / folder).glob("*.md") if p.stem != "README")
 
 
-def text(folder, name):
-    return (ROOT / folder / f"{name}.md").read_text(encoding="utf-8")
+def options():
+    """What each setting can be; for models, whether each is reachable now."""
+    return {
+        "scenario": sorted(p.parent.name for p in (ROOT / "scenarios").glob("*/cases.json")),
+        "strategy": names("persuader-strategies"),
+        "tier": TIERS,
+        "model": {name: llm.ready(name) for name in llm.models()},
+    }
+
+
+def traits():
+    """persuadee-personas/index.csv by persona id, if there is one."""
+    path = ROOT / "persuadee-personas" / "index.csv"
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8") as f:
+        return {row.pop("id"): row for row in csv.DictReader(f)}
+
+
+def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
+    """Plays the run and returns its folder. on_game(record) is called as each game finishes."""
+    s = settings
+    for name in ("persuader_model", "persuadee_model"):
+        if not llm.ready(s[name]):
+            raise RuntimeError(f"{s[name]} isn't reachable; start it with scripts\\serve.ps1 -Model {s[name]}")
+    config = game.load(s["scenario"])
+    strategy = (ROOT / "persuader-strategies" / f"{s['strategy']}.md").read_text(encoding="utf-8")
+    personas, persona_traits = names("persuadee-personas"), traits()
+    model = {"persuader": s["persuader_model"], "persuadee": s["persuadee_model"]}
+
+    folder = RUNS / (time.strftime("%Y%m%d-%H%M%S") + "_" + "_".join(
+        [s["scenario"], s["strategy"], s["tier"], s["persuader_model"], "vs", s["persuadee_model"]]))
+    folder.mkdir(parents=True)
+    run = {"settings": s, "seed": seed, "max_turns": max_turns, "guard": guard, "games": len(personas),
+           "status": "running", "started": time.strftime("%Y-%m-%d %H:%M:%S"), "results": {}}
+    lock = threading.Lock()
+
+    def save():
+        (folder / "run.json").write_text(json.dumps(run, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    def one(i, persona):
+        case = config["cases"][i % len(config["cases"])]
+        record = {**s, "persona": persona, "traits": persona_traits.get(persona, {}), "case": case["id"],
+                  "price_H": case["price_H"], "price_L": case["price_L"], "seed": seed, "guard": guard}
+        try:
+            text = (ROOT / "persuadee-personas" / f"{persona}.md").read_text(encoding="utf-8")
+            record.update(game.play(s["scenario"], config, case, strategy,
+                                    text if s["tier"] == "t2_secretary" else None, model,
+                                    seed=seed, max_turns=max_turns, guard=guard))
+        except Exception as e:   # one failed game shouldn't stop the run; it's logged with its error
+            record["error"] = f"{type(e).__name__}: {e}"
+        (folder / f"{persona}.json").write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
+        (folder / f"{persona}.md").write_text(transcript(record, config), encoding="utf-8")
+        with lock:
+            run["results"][persona] = {"case": case["id"], **(record.get("outcome") or {"error": record["error"]})}
+            save()
+        if on_game:
+            on_game(record)
+
+    save()
+    with ThreadPoolExecutor(workers) as ex:
+        for future in as_completed([ex.submit(one, i, p) for i, p in enumerate(personas)]):
+            future.result()
+    run["results"] = dict(sorted(run["results"].items()))
+    run.update(status="done", finished=time.strftime("%Y-%m-%d %H:%M:%S"), summary=summary(run["results"]))
+    save()
+    return folder
+
+
+def summary(results):
+    """Games, deals, mean advance over deals, breaches over deals, errors."""
+    outcomes = list(results.values())
+    deals = [o for o in outcomes if o.get("deal")]
+    return {
+        "games": len(outcomes),
+        "deals": len(deals),
+        "deal_rate": round(len(deals) / len(outcomes), 4) if outcomes else None,
+        "mean_advance": round(sum(o["advance"] for o in deals) / len(deals), 4) if deals else None,
+        "breaches": sum(o["breach"] for o in deals),
+        "errors": sum("error" in o for o in outcomes),
+    }
+
+
+def transcript(record, config):
+    """The game as a readable Markdown page."""
+    roles, c = config.get("roles", {}), config["currency"]
+    who = {r: f"{r.capitalize()} ({roles[r]})" if r in roles else r.capitalize() for r in ("persuader", "persuadee")}
+    lines = [f"# {record['persona']} · {record['case']} · {record['strategy']} · {record['tier']}", "",
+             f"- {who['persuader']}: {record['persuader_model']}, cap {c}{record['price_H']:g} (the listed price)",
+             f"- {who['persuadee']}: {record['persuadee_model']}, floor {c}{record['price_L']:g}"]
+    if "error" in record:
+        lines.append(f"- **Error:** {record['error']}")
+    else:
+        o = record["outcome"]
+        lines.append(f"- **Outcome:** deal at {c}{o['price']:g}, advance {o['advance']:.2f}"
+                     + (", **below the floor**" if o["breach"] else "") + f", {o['turns']} messages"
+                     if o["deal"] else f"- **Outcome:** no deal after {o['turns']} messages")
+    for turn in record.get("transcript", []):
+        a = turn["action"]
+        action = f" · {a['kind']}" + (f" {c}{a['amount']:g}" if a["amount"] is not None else "") if a else ""
+        lines += ["", f"**{turn['turn'] + 1}. {who[turn['role']]}**{action}", "", turn["text"].strip()]
+    if record.get("rejected"):
+        lines += ["", "## Rejected attempts", ""]
+        lines += [f"- {r['turn'] + 1}. {r['role']}: {r['problem']}" for r in record["rejected"]]
+    return "\n".join(lines) + "\n"
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", default="secondhand")
-    ap.add_argument("--cases", nargs="*", help="case ids (default: all)")
-    ap.add_argument("--strategies", nargs="*", help="persuader-strategies/ names (default: all)")
-    ap.add_argument("--personas", nargs="*", help="persuadee-personas/ names (default: all)")
-    ap.add_argument("--tiers", nargs="*", default=["t1_vanilla", "t2_secretary"],
-                    choices=["t1_vanilla", "t2_secretary"])
-    ap.add_argument("--seeds", type=int, default=1, help="games per cell")
-    ap.add_argument("--max-turns", type=int, default=20, help="messages before it ends with no deal")
+    ap.add_argument("--strategy", required=True, help="a persuader-strategies/ name")
+    ap.add_argument("--tier", required=True, choices=TIERS)
+    ap.add_argument("--persuader-model", default="qwen3.5-9b", help="a models.json name")
+    ap.add_argument("--persuadee-model", default="qwen3.5-9b", help="a models.json name")
     ap.add_argument("--workers", type=int, default=4, help="games at once; match serve.ps1's slots")
-    ap.add_argument("--thinking", action="store_true", help="let the model think before each message (slower)")
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--max-turns", type=int, default=20, help="messages before it ends with no deal")
     ap.add_argument("--guard", action="store_true", help="enforce the persuadee's floor in code too")
     args = ap.parse_args()
+    settings = {k: getattr(args, k) for k in SETTINGS}
 
-    if not llm.ready():
-        raise SystemExit(f"No server at {llm.SERVER}; start it with scripts/serve.ps1")
-    config = game.load(args.scenario)
-    cases = [c for c in config["cases"] if not args.cases or c["id"] in args.cases]
-    strategies = args.strategies or names("persuader-strategies")
-    personas = args.personas or names("persuadee-personas")
-    grid = list(itertools.product(cases, strategies, personas, args.tiers, range(args.seeds)))
-    model = llm.model()
+    def show(r):
+        o = r.get("outcome") or {}
+        print(f"{r['persona']} {r['case']}: " + (r["error"] if "error" in r else
+              f"deal at {o['price']:g}, advance {o['advance']:.2f}" if o["deal"] else "no deal"), flush=True)
 
-    out = ROOT / "data" / "runs" / f"{time.strftime('%Y%m%d-%H%M%S')}-{args.scenario}.jsonl"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    lock = threading.Lock()
-    print(f"{len(grid)} games on {model} -> {out.relative_to(ROOT)}")
-
-    def one(cell):
-        case, strategy, persona, tier, seed = cell
-        record = {"scenario": args.scenario, "case": case["id"], "price_H": case["price_H"], "price_L": case["price_L"],
-                  "strategy": strategy, "persona": persona, "tier": tier, "seed": seed, "model": model,
-                  "thinking": args.thinking, "guard": args.guard, "max_turns": args.max_turns}
-        try:
-            record.update(game.play(args.scenario, config, case, text("persuader-strategies", strategy),
-                                    text("persuadee-personas", persona) if tier == "t2_secretary" else None,
-                                    seed=seed, max_turns=args.max_turns, thinking=args.thinking, guard=args.guard))
-        except Exception as e:   # one failed game shouldn't stop the run; it's logged with its error
-            record["error"] = f"{type(e).__name__}: {e}"
-        with lock, out.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
-        return record
-
-    started, records = time.time(), []
-    with ThreadPoolExecutor(args.workers) as ex:
-        for i, future in enumerate(as_completed([ex.submit(one, cell) for cell in grid]), 1):
-            r = future.result()
-            o = r.get("outcome") or {}
-            print(f"[{i}/{len(grid)}] {r['case']} {r['strategy']} {r['persona']} {r['tier']} s{r['seed']}: "
-                  + (r["error"] if "error" in r else
-                     f"price {o['price']:g} advance {o['advance']:.2f} in {o['turns']} turns" if o["deal"] else
-                     f"no deal in {o['turns']} turns"), flush=True)
-            records.append(r)
-    print(f"\nDone in {time.time() - started:.0f} s.")
-    summary(records)
-
-
-def summary(records):
-    """Per strategy x tier: games, deal rate, mean advance over deals, breach rate over deals."""
-    cells = defaultdict(list)
-    for r in records:
-        cells[(r["strategy"], r["tier"])].append(r)
-    print(f"\n{'strategy':<18}{'tier':<14}{'games':>6}{'deals':>7}{'advance':>9}{'breach':>8}{'errors':>8}")
-    for (strategy, tier), rs in sorted(cells.items()):
-        deals = [r["outcome"] for r in rs if r.get("outcome", {}).get("deal")]
-        advance = sum(o["advance"] for o in deals) / len(deals) if deals else float("nan")
-        breach = sum(o["breach"] for o in deals) / len(deals) if deals else float("nan")
-        errors = sum("error" in r for r in rs)
-        print(f"{strategy:<18}{tier:<14}{len(rs):>6}{len(deals) / len(rs):>7.0%}{advance:>9.2f}{breach:>8.0%}{errors:>8}")
+    folder = start(settings, args.workers, args.seed, args.max_turns, args.guard, on_game=show)
+    print(f"\n{json.loads((folder / 'run.json').read_text(encoding='utf-8'))['summary']}\nLogs: {folder}")
 
 
 if __name__ == "__main__":

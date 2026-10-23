@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PA-to-PA Runs</title>
+<style>
+  :root {
+    --bg: #f7f6f3; --panel: #ffffff; --text: #1f1e1c; --muted: #6b6862; --line: #e4e1db;
+    --accent: #2f5d8a; --accent-text: #ffffff; --pill: #efece6; --good: #2e7d4f; --bad: #b3412e; --warn: #9a6a12;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --panel: #1f1f1d; --text: #ecebe8; --muted: #9c9a94; --line: #34332f;
+      --accent: #6b9fd1; --accent-text: #0f1a25; --pill: #2a2a27; --good: #6cc08f; --bad: #e07a66; --warn: #d6a54a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .group { display: grid; grid-template-columns: 150px 1fr; gap: 8px; align-items: start; padding: 6px 0; }
+  .group > label { color: var(--muted); padding-top: 5px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { border: 1px solid var(--line); background: var(--pill); color: var(--text); border-radius: 999px;
+          padding: 4px 12px; font: inherit; cursor: pointer; }
+  .pill[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .pill:disabled { opacity: .45; cursor: not-allowed; }
+  .actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  button.run { background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px;
+               padding: 8px 22px; font: inherit; font-weight: 600; cursor: pointer; }
+  button.run:disabled { opacity: .5; cursor: not-allowed; }
+  .msg { color: var(--muted); }
+  .msg.error { color: var(--bad); }
+  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+  @media (max-width: 760px) { .layout, .group { grid-template-columns: 1fr; } }
+  .history { max-height: 640px; overflow: auto; padding: 8px; }
+  .history button { display: block; width: 100%; text-align: left; border: 0; background: none; color: var(--text);
+                    padding: 8px; border-radius: 6px; font: inherit; cursor: pointer; }
+  .history button:hover { background: var(--pill); }
+  .history button.on { background: var(--pill); outline: 1px solid var(--line); }
+  .history small { display: block; color: var(--muted); }
+  .stats { display: flex; flex-wrap: wrap; gap: 20px; margin: 8px 0 14px; }
+  .stat b { display: block; font-size: 20px; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .bar { height: 6px; background: var(--pill); border-radius: 3px; overflow: hidden; margin: 6px 0 12px; }
+  .bar div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .breach { color: var(--bad); font-weight: 600; }
+  .nodeal { color: var(--warn); }
+  .err { color: var(--bad); }
+  a { color: var(--accent); }
+  .table-wrap { overflow-x: auto; }
+  code { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>PA-to-PA runs</h1>
+  <p class="sub">Each run plays one game per persona with these five settings.</p>
+
+  <section class="panel">
+    <div id="groups"></div>
+    <div class="actions">
+      <button class="run" id="run">Run</button>
+      <span class="msg" id="msg"></span>
+    </div>
+  </section>
+
+  <div class="layout">
+    <section class="panel history" id="history"></section>
+    <section class="panel" id="detail"><p class="msg">No runs yet.</p></section>
+  </div>
+</main>
+
+<script>
+const GROUPS = [
+  ["scenario", "Scenario"], ["strategy", "Persuader strategy"], ["tier", "Persuadee tier"],
+  ["persuader_model", "Persuader model"], ["persuadee_model", "Persuadee model"],
+];
+const pick = {};
+let options = null, shown = null, busy = false, last = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+function remember() { try { localStorage.setItem("pick", JSON.stringify(pick)); } catch (e) {} }
+function recall() { try { return JSON.parse(localStorage.getItem("pick")) || {}; } catch (e) { return {}; } }
+
+async function loadOptions() {
+  options = await (await fetch("/api/options")).json();
+  const saved = recall();
+  $("groups").innerHTML = GROUPS.map(([key, label]) => {
+    const isModel = key.endsWith("_model");
+    const values = isModel ? Object.keys(options.model) : options[key];
+    if (!values.includes(pick[key])) pick[key] = values.includes(saved[key]) ? saved[key] : (values.length === 1 ? values[0] : undefined);
+    const pills = values.map(v => {
+      const off = isModel && !options.model[v];
+      return `<button class="pill" data-key="${key}" data-value="${esc(v)}" aria-pressed="${pick[key] === v}"
+              ${off ? 'disabled title="Not running: start it with scripts\\serve.ps1 -Model ' + esc(v) + '"' : ""}>${esc(v)}</button>`;
+    }).join("");
+    return `<div class="group"><label>${label}</label><div class="pills">${pills}</div></div>`;
+  }).join("");
+  for (const b of document.querySelectorAll(".pill")) {
+    b.onclick = () => { pick[b.dataset.key] = b.dataset.value; remember(); loadOptions(); };
+  }
+  refreshButton();
+}
+
+function refreshButton() {
+  const missing = GROUPS.filter(([k]) => !pick[k]).map(([, l]) => l.toLowerCase());
+  const down = options && ["persuader_model", "persuadee_model"].filter(k => pick[k] && !options.model[pick[k]]);
+  $("run").disabled = busy || missing.length > 0 || (down && down.length > 0);
+  $("run").textContent = busy ? "Running…" : "Run";
+  if (busy) setMsg("");
+  else if (missing.length) setMsg("Choose: " + missing.join(", "));
+  else if (down && down.length) setMsg(pick[down[0]] + " isn't running", true);
+  else if (last && last.error) setMsg(last.error, true);
+  else setMsg("");
+}
+
+function setMsg(text, error) { $("msg").textContent = text; $("msg").className = "msg" + (error ? " error" : ""); }
+
+$("run").onclick = async () => {
+  const res = await fetch("/api/run", {method: "POST", body: JSON.stringify(pick)});
+  const body = await res.json();
+  if (!res.ok) return setMsg(body.error, true);
+  shown = null;
+  poll();
+};
+
+const pct = x => x == null ? "–" : (x * 100).toFixed(0) + "%";
+const num = x => x == null ? "–" : x.toFixed(2);
+
+function summarize(r) {
+  const res = Object.values(r.results || {});
+  const deals = res.filter(o => o.deal);
+  return {
+    done: res.length, deals: deals.length,
+    advance: deals.length ? deals.reduce((a, o) => a + o.advance, 0) / deals.length : null,
+    breaches: deals.filter(o => o.breach).length, errors: res.filter(o => o.error).length,
+  };
+}
+
+function renderHistory(runs) {
+  $("history").innerHTML = runs.length ? runs.map(r => {
+    const s = r.settings, st = summarize(r);
+    const status = r.status === "running" ? (busy ? `running ${st.done}/${r.games}` : "interrupted") : `${st.deals}/${r.games} deals`;
+    return `<button data-folder="${esc(r.folder)}" class="${r.folder === shown ? "on" : ""}">
+      ${esc(s.strategy)} · ${esc(s.tier)}<small>${esc(s.scenario)} · ${esc(s.persuader_model)} vs ${esc(s.persuadee_model)}</small>
+      <small>${esc(r.started)} · ${status}</small></button>`;
+  }).join("") : '<p class="msg">No runs yet.</p>';
+  for (const b of $("history").querySelectorAll("button")) b.onclick = () => { shown = b.dataset.folder; render(); };
+}
+
+function renderDetail(r) {
+  if (!r) { $("detail").innerHTML = '<p class="msg">No runs yet.</p>'; return; }
+  const s = r.settings, st = summarize(r), link = f => `/runs/${encodeURIComponent(r.folder)}/${f}`;
+  const rows = Object.entries(r.results).sort(([a], [b]) => a.localeCompare(b)).map(([p, o]) => {
+    const result = o.error ? `<span class="err">${esc(o.error)}</span>`
+      : !o.deal ? `<span class="nodeal">no deal</span>`
+      : `${o.price}${o.breach ? ' <span class="breach">below floor</span>' : ""}`;
+    return `<tr><td>${esc(p)}</td><td>${esc(o.case || "")}</td><td>${result}</td>
+      <td class="num">${o.deal ? num(o.advance) : "–"}</td><td class="num">${o.turns ?? "–"}</td>
+      <td><a href="${link(p + ".md")}" target="_blank">transcript</a> · <a href="${link(p + ".json")}" target="_blank">json</a></td></tr>`;
+  }).join("");
+  $("detail").innerHTML = `
+    <strong>${esc(s.strategy)} · ${esc(s.tier)} · ${esc(s.scenario)}</strong>
+    <div class="msg">${esc(s.persuader_model)} (persuader) vs ${esc(s.persuadee_model)} (persuadee) · started ${esc(r.started)}</div>
+    <div class="bar"><div style="width:${100 * st.done / r.games}%"></div></div>
+    <div class="stats">
+      <div class="stat"><b>${st.done}/${r.games}</b><span>games played</span></div>
+      <div class="stat"><b>${st.done ? pct(st.deals / st.done) : "–"}</b><span>deal rate</span></div>
+      <div class="stat"><b>${num(st.advance)}</b><span>mean advance (deals)</span></div>
+      <div class="stat"><b>${st.breaches}</b><span>below floor</span></div>
+      <div class="stat"><b>${st.errors}</b><span>errors</span></div>
+    </div>
+    <div class="msg">Logs: <code>data/runs/${esc(r.folder)}/</code></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Persona</th><th>Case</th><th>Price</th><th>Advance</th><th>Messages</th><th>Log</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+}
+
+function render() {
+  if (!last) return;
+  if (!shown && last.runs.length) shown = last.runs[0].folder;
+  renderHistory(last.runs);
+  renderDetail(last.runs.find(r => r.folder === shown));
+}
+
+async function poll() {
+  last = await (await fetch("/api/state")).json();
+  const was = busy;
+  busy = last.busy;
+  render();
+  refreshButton();
+  if (was && !busy) loadOptions();
+  clearTimeout(poll.t);
+  poll.t = setTimeout(poll, busy ? 1500 : 10000);
+}
+
+loadOptions().then(poll);
+</script>
+</body>
+</html>

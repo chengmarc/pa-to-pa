@@ -19,13 +19,12 @@ See `notes/2026-10-23-scope-two-scenarios.md`.
 
 ## Local model
 
-Two models, served by llama.cpp b10434 (CUDA 12.4 build) with an OpenAI-compatible API at
-`http://127.0.0.1:8081/v1`:
+Two local models, served by llama.cpp b10434 (CUDA 12.4 build), each with an OpenAI-compatible API on its own port:
 
-| `-Model` | File | Runs | Speed on an RTX 5060 Laptop (8 GB) |
-|---|---|---|---|
-| `qwen3.5-9b` (default) | Qwen3.5-9B Q4_K_M, 5.3 GB | entirely on the GPU, 4 slots of 8k | 56 tok/s alone, 129 tok/s over 4 games |
-| `gpt-oss-20b` | gpt-oss-20b MXFP4, 12 GB | split GPU/RAM, 8 slots of 8k | 23 tok/s alone, 54 tok/s over 8 games |
+| `-Model` | File | Port | Runs | Speed on an RTX 5060 Laptop (8 GB) |
+|---|---|---|---|---|
+| `qwen3.5-9b` (default) | Qwen3.5-9B Q4_K_M, 5.3 GB | 8081 | entirely on the GPU, 4 slots of 8k | 56 tok/s alone, 129 tok/s over 4 games |
+| `gpt-oss-20b` | gpt-oss-20b MXFP4, 12 GB | 8082 | split GPU/RAM, 8 slots of 8k | 23 tok/s alone, 54 tok/s over 8 games |
 
 Models and runtime are not in git; on a fresh clone, download them once (~19 GB):
 
@@ -33,23 +32,36 @@ Models and runtime are not in git; on a fresh clone, download them once (~19 GB)
 powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1
 ```
 
-Start the server (Ctrl+C stops it). Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first:
+Start a server (Ctrl+C stops it). Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\serve.ps1 [-Model gpt-oss-20b]
 ```
 
-`pa2pa/llm.py` is a standard-library client; `python -m pa2pa.llm` is a smoke test.
+`models.json` lists the models a run can use, by name and address. A hosted OpenAI-compatible API can be added there
+with `api_key_env` (the environment variable holding its key) and `model` (its own model id). `pa2pa/llm.py` is the
+client; `python -m pa2pa.llm [model]` is a smoke test.
 
-## Running games
+## Running
+
+A **run** plays one game per persona (45) with five settings fixed: scenario, persuader strategy, persuadee tier,
+persuader model and persuadee model. Start the model server(s), then either open the runs page:
 
 ```powershell
-python -m pa2pa.run --scenario secondhand                                  # the full grid
-python -m pa2pa.run --cases bike --strategies voss --personas p01 --seeds 2   # a slice
+python -m pa2pa.ui        # http://127.0.0.1:8090: pick the five settings, press Run
 ```
 
-The grid is case × strategy × persona × tier × seed. Each game is logged with its full transcript to
-`data/runs/<time>-<scenario>.jsonl`, and a summary per strategy × tier is printed at the end.
+or run from the command line:
+
+```powershell
+python -m pa2pa.run --strategy voss --tier t2_secretary [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
+```
+
+Each run writes a folder `data/runs/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and,
+per persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and
+rejected attempts). The page lists past runs and links every transcript. Each persona always gets the same case
+(the cases are dealt out over the personas in order), so runs compare persona by persona. A run of 45 games takes
+~15 minutes on Qwen locally.
 
 How a game works (`pa2pa/game.py`, prompts in `scenarios/<scenario>/`):
 
@@ -70,7 +82,8 @@ How a game works (`pa2pa/game.py`, prompts in `scenarios/<scenario>/`):
 - `notes/` — working notes, decisions, write-ups
 - `sources/` — references, papers, links, excerpts
 - `data/` — datasets and results (`data/runs/`: game logs, not in git)
-- `pa2pa/` — model client, game engine and runner
+- `pa2pa/` — model client, game engine, runner and runs page
 - `scenarios/` — per scenario: the two prompts and the cases
 - `scripts/` — model download and server
+- `models.json` — the models runs can use
 - `runtime/`, `model/`, `logs/` — llama.cpp, the model and server logs (not in git)

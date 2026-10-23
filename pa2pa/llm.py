@@ -1,56 +1,70 @@
-"""Minimal client for the local model server (scripts/serve.ps1). Standard library only.
+"""Minimal client for the models in models.json: local llama-servers (scripts/serve.ps1) or hosted OpenAI-compatible
+APIs. Standard library only.
 
-    python -m pa2pa.llm              # smoke test: one short exchange
+    python -m pa2pa.llm [model]      # smoke test: one short exchange (default qwen3.5-9b)
 """
 import json
+import os
+import sys
 import urllib.request
+from pathlib import Path
 
-SERVER = "http://127.0.0.1:8081"
+ROOT = Path(__file__).resolve().parent.parent
 
 
-def chat(messages, template_kwargs=None, temperature=0.7, seed=None, max_tokens=None, timeout=600):
-    """One chat completion. Returns {"content", "reasoning", "usage"}.
+def models():
+    """models.json: {name: {url, template_kwargs, [api_key_env, model]}}."""
+    data = json.loads((ROOT / "models.json").read_text(encoding="utf-8"))
+    return {name: m for name, m in data.items() if not name.startswith("_")}
 
-    template_kwargs are variables of the model's chat template, which is where each model takes its thinking switch:
-    Qwen3.5 {"enable_thinking": False}; gpt-oss {"reasoning_effort": "low" | "medium" | "high"}.
-    """
-    body = {"messages": messages, "temperature": temperature}
-    if template_kwargs:
-        body["chat_template_kwargs"] = template_kwargs
+
+def _request(model, path, body=None, timeout=600):
+    m = models()[model]
+    headers = {"Content-Type": "application/json"}
+    if m.get("api_key_env"):
+        headers["Authorization"] = "Bearer " + os.environ.get(m["api_key_env"], "")
+    req = urllib.request.Request(m["url"] + path, data=body and json.dumps(body).encode(), headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout) as res:
+        return json.load(res)
+
+
+def chat(model, messages, temperature=0.7, seed=None, max_tokens=None, timeout=600):
+    """One chat completion from the named model. Returns {"content", "reasoning", "usage"}.
+    The model's template_kwargs (e.g. Qwen3.5 enable_thinking, gpt-oss reasoning_effort) go with every request."""
+    m = models()[model]
+    body = {"model": m.get("model", model), "messages": messages, "temperature": temperature}
+    if m.get("template_kwargs"):
+        body["chat_template_kwargs"] = m["template_kwargs"]
     if seed is not None:
         body["seed"] = seed
     if max_tokens is not None:
         body["max_tokens"] = max_tokens
-    req = urllib.request.Request(SERVER + "/v1/chat/completions", data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as res:
-        data = json.load(res)
+    data = _request(model, "/chat/completions", body, timeout)
     message = data["choices"][0]["message"]
     return {"content": message.get("content") or "", "reasoning": message.get("reasoning_content") or "",
             "usage": data.get("usage", {})}
 
 
-def model():
-    """The name of the model the server is running (serve.ps1's -Model)."""
-    with urllib.request.urlopen(SERVER + "/v1/models", timeout=5) as res:
-        return json.load(res)["data"][0]["id"]
-
-
-def ready():
-    """Whether the server has loaded the model and takes requests."""
+def ready(model):
+    """Whether the named model can take requests: a local server has loaded it; a hosted API has its key set."""
+    m = models().get(model)
+    if m is None:
+        return False
+    if m.get("api_key_env"):
+        return bool(os.environ.get(m["api_key_env"]))
     try:
-        with urllib.request.urlopen(SERVER + "/health", timeout=2) as res:
-            return res.status == 200
+        _request(model, "/models", timeout=2)
+        return True
     except OSError:
         return False
 
 
 if __name__ == "__main__":
-    if not ready():
-        raise SystemExit(f"No server at {SERVER}; start it with scripts/serve.ps1")
-    print("model:", model())
-    reply = chat([{"role": "system", "content": "You are a seller of a used bicycle. Your floor is $120."},
-                  {"role": "user", "content": "Would you take $90 for it?"}], seed=0)
+    name = sys.argv[1] if len(sys.argv) > 1 else "qwen3.5-9b"
+    if not ready(name):
+        raise SystemExit(f"{name} isn't reachable at {models()[name]['url']}; start it with scripts/serve.ps1")
+    reply = chat(name, [{"role": "system", "content": "You are a seller of a used bicycle. Your floor is $120."},
+                        {"role": "user", "content": "Would you take $90 for it?"}], seed=0)
     print("reasoning:", reply["reasoning"][:300])
     print("content:", reply["content"])
     print("usage:", reply["usage"])

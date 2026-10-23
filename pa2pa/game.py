@@ -84,21 +84,20 @@ def load(scenario):
     return json.loads((ROOT / "scenarios" / scenario / "cases.json").read_text(encoding="utf-8"))
 
 
-def play(scenario, config, case, strategy, persona, seed=0, max_turns=20, thinking=False, guard=False):
+def play(scenario, config, case, strategy, persona, model, seed=0, max_turns=20, guard=False):
     """Plays one game; returns its record: the transcript, every invalid attempt, and the outcome.
-    config is load(scenario); case one of its cases."""
+    config is load(scenario); case one of its cases; model {"persuader": name, "persuadee": name} from models.json."""
     assert case["price_H"] > case["price_L"], f"{case['id']}: price_H must be above price_L"
     system = dict(zip(("persuader", "persuadee"),
                       prompts(scenario, case, config["currency"], strategy, persona, max_turns)))
-    kwargs = {"enable_thinking": thinking}
     standing = {"persuader": None, "persuadee": float(case["price_H"])}
     transcript, rejected, price = [], [], None
     for turn in range(max_turns):
         role = ("persuader", "persuadee")[turn % 2]
         messages = [{"role": "system", "content": system[role]}] + history(transcript, role, config["opening"])
         for attempt in range(RETRIES + 1):
-            reply = llm.chat(messages, kwargs, seed=seed * 1000 + turn * 10 + attempt,
-                             max_tokens=4096 if thinking else 800)
+            # max_tokens counts reasoning too, for models that reason before they answer
+            reply = llm.chat(model[role], messages, seed=seed * 1000 + turn * 10 + attempt, max_tokens=4096)
             action = parse(reply["content"])
             problem = check(role, action, standing, case, guard)
             if problem is None:

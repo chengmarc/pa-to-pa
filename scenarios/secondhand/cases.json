@@ -1,6 +1,7 @@
 {
   "_note": "Placeholder cases. price_H: the buyer's hidden maximum and the listed price. price_L: the seller's hidden minimum. price_H > price_L, so a deal is always possible.",
   "currency": "$",
+  "roles": {"persuader": "buyer", "persuadee": "seller"},
   "opening": "The seller is in the chat now. Send your first message.",
   "cases": [
     {

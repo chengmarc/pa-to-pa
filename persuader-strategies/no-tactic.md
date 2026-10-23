@@ -1,3 +1,1 @@
-# no-tactic
-
-Placeholder. Strategy prompt to be added.
+Negotiate however you think best.
