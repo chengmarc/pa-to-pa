@@ -58,7 +58,7 @@ How a game works (`pa2pa/game.py`, prompts in `scenarios/<scenario>/`):
   breach (`--guard` enforces it in code too). `price_H > price_L`, so a deal is always possible.
 - The listing is at `price_H`. The persuader speaks first. Messages carry `[[OFFER n]]` or `[[ACCEPT]]`; an offer
   that meets or crosses the other side's closes the deal at the other side's price. No deal after 20 messages ends
-  the game.
+  the game as a no-deal: it has no price or advance, and the summary reports the deal rate separately.
 - Score: `advance = (price_H − price) / (price_H − price_L)`. 0 = closed at the listed price, 1 = at the seller's
   floor, above 1 = below it.
 - Tiers: `secretary` puts the principal's persona in the persuadee's prompt; `vanilla` leaves it out.

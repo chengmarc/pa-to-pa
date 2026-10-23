@@ -33,3 +33,10 @@ can be scored by code.
   seller in D1; candidate or employer in D2)?
 - Do we add D2 → I2 (salary + equity/bonus/start date) later as the one
   integrative extension?
+
+## Decision: no-deals stand
+
+A game that reaches the message limit without a deal is recorded as a no-deal. We don't force a deal. A no-deal has
+no price and no advance; deal rate is reported as its own outcome, and mean advance is computed over deals only.
+Both prompts state the payoff honestly (no deal is worse than any price within your limit) but nothing compels
+agreement.
