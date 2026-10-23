@@ -1,7 +1,7 @@
-# Downloads what git doesn't hold: llama.cpp into runtime\llama\ and gpt-oss-20b into model\.
+# Downloads what git doesn't hold: llama.cpp into runtime\llama\ and the models into model\.
 # Run it again any time: it only downloads what's missing, and an interrupted download resumes.
 #   powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1
-# Adapted from agent-2b's packaging\fetch.ps1; same llama.cpp build and model file, so results match across the two.
+# Adapted from agent-2b's packaging\fetch.ps1; same llama.cpp build and gpt-oss file, so results match across the two.
 $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot
 $Staging = Join-Path $Root "build\downloads"
@@ -12,10 +12,15 @@ $Tar = Join-Path $env:SystemRoot "System32\tar.exe"
 $LlamaUrls = @(
     "https://github.com/ggml-org/llama.cpp/releases/download/b10434/llama-b10434-bin-win-cuda-12.4-x64.zip",
     "https://github.com/ggml-org/llama.cpp/releases/download/b10434/cudart-llama-bin-win-cuda-12.4-x64.zip")
-# gpt-oss-20b, MXFP4, pinned to one Hugging Face revision                                              ~12 GB
-$ModelUrl = "https://huggingface.co/ggml-org/gpt-oss-20b-GGUF/resolve/ef9b12f2ff56c69cf32153a02784e7a3c88bf524/gpt-oss-20b-MXFP4.gguf"
-$ModelSize = 12109566624
-$Model = Join-Path $Root "model\gpt-oss-20b-mxfp4.gguf"
+# The models, each pinned to one Hugging Face revision. Same names as serve.ps1's -Model.
+$Models = @(
+    # Qwen3.5-9B, Q4_K_M: fits entirely in 8 GB of VRAM                                                 ~5.3 GB
+    @{ File = "qwen3.5-9b-q4_k_m.gguf"; Size = 5680522464
+       Url = "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q4_K_M.gguf" },
+    # gpt-oss-20b, MXFP4: needs 16 GB of VRAM to fit; otherwise split between GPU and RAM               ~12 GB
+    @{ File = "gpt-oss-20b-mxfp4.gguf"; Size = 12109566624
+       Url = "https://huggingface.co/ggml-org/gpt-oss-20b-GGUF/resolve/ef9b12f2ff56c69cf32153a02784e7a3c88bf524/gpt-oss-20b-MXFP4.gguf" }
+)
 
 # curl reads HTTPS_PROXY but not the Windows proxy setting (e.g. Clash).
 if (-not $env:HTTPS_PROXY) {
@@ -56,11 +61,13 @@ try {
         $files | Remove-Item
         Write-Host "Ready: runtime\llama"
     }
-    if (-not (Test-Path $Model)) {
-        Write-Host "`n== model =="
-        Get-Download $ModelUrl $Model | Out-Null
-        if ((Get-Item $Model).Length -ne $ModelSize) { throw "model\ has the wrong size; delete it and run this again" }
-        Write-Host "Ready: model\$(Split-Path -Leaf $Model)"
+    foreach ($m in $Models) {
+        $model = Join-Path $Root "model\$($m.File)"
+        if (Test-Path $model) { continue }
+        Write-Host "`n== model\$($m.File) =="
+        Get-Download $m.Url $model | Out-Null
+        if ((Get-Item $model).Length -ne $m.Size) { throw "model\$($m.File) has the wrong size; delete it and run this again" }
+        Write-Host "Ready: model\$($m.File)"
     }
     if ((Test-Path $Staging) -and -not (Get-ChildItem $Staging)) { Remove-Item -Recurse (Split-Path $Staging) }
     Write-Host "`nDone. Start the server next: powershell -ExecutionPolicy Bypass -File scripts\serve.ps1"
