@@ -1,4 +1,4 @@
-# Downloads what git doesn't hold into src\runtime\: llama.cpp into llama\ and the models into model\.
+# Downloads what git doesn't hold into runtime\: llama.cpp into llama\ and the models into model\.
 # Run it again any time: it only downloads what's missing, and an interrupted download resumes.
 #   powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1
 # Adapted from agent-2b's packaging\fetch.ps1; same llama.cpp build and gpt-oss file, so results match across the two.
@@ -50,24 +50,24 @@ function Get-Download([string]$Url, [string]$File) {
 }
 
 try {
-    $llama = Join-Path $Root "src\runtime\llama"
+    $llama = Join-Path $Root "runtime\llama"
     if (-not (Test-Path $llama)) {
-        Write-Host "`n== src\runtime\llama =="
+        Write-Host "`n== runtime\llama =="
         $files = @($LlamaUrls | ForEach-Object { Get-Download $_ (Join-Path $Staging ($_ -split "/")[-1]) })
         if (Test-Path "$llama.new") { Remove-Item -Recurse -Force "$llama.new" }
         New-Item -ItemType Directory -Force "$llama.new" | Out-Null
         foreach ($f in $files) { Invoke-Native $Tar @("-xf", $f, "-C", "$llama.new") }
         Move-Item "$llama.new" $llama
         $files | Remove-Item
-        Write-Host "Ready: src\runtime\llama"
+        Write-Host "Ready: runtime\llama"
     }
     foreach ($m in $Models) {
-        $model = Join-Path $Root "src\runtime\model\$($m.File)"
+        $model = Join-Path $Root "runtime\model\$($m.File)"
         if (Test-Path $model) { continue }
-        Write-Host "`n== src\runtime\model\$($m.File) =="
+        Write-Host "`n== runtime\model\$($m.File) =="
         Get-Download $m.Url $model | Out-Null
-        if ((Get-Item $model).Length -ne $m.Size) { throw "src\runtime\model\$($m.File) has the wrong size; delete it and run this again" }
-        Write-Host "Ready: src\runtime\model\$($m.File)"
+        if ((Get-Item $model).Length -ne $m.Size) { throw "runtime\model\$($m.File) has the wrong size; delete it and run this again" }
+        Write-Host "Ready: runtime\model\$($m.File)"
     }
     if ((Test-Path $Staging) -and -not (Get-ChildItem $Staging)) { Remove-Item -Recurse (Split-Path $Staging) }
     Write-Host "`nDone. Start the server next: powershell -ExecutionPolicy Bypass -File scripts\serve.ps1"

@@ -9,7 +9,7 @@ and logs every transcript.
 Once per clone (Windows, an NVIDIA GPU with 6 GB+ of VRAM and a CUDA 12.4+ driver, Python 3.11+):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1   # llama.cpp and the models into src\runtime\ (~19 GB)
+powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1   # llama.cpp and the models into runtime\ (~19 GB)
 pip install -e .                                             # the pa2pa-ui and pa2pa-run commands
 ```
 
@@ -35,7 +35,7 @@ attempts). The page lists past runs and links every transcript. Each persona alw
 are dealt out over the personas in order), so runs compare persona by persona. A run takes ~15 minutes on Qwen
 locally.
 
-How a game works (`src/pa2pa/game.py`, prompts in `src/scenarios/<scenario>/`):
+How a game works (`src/game.py`, prompts in `context/scenarios/<scenario>/`):
 
 - The **persuader** (buyer) has a hidden maximum `price_H`, enforced in code. The **persuadee** (seller, the
   principal's assistant) has a hidden minimum `price_L`, stated in its prompt only; selling below it is recorded as a
@@ -65,12 +65,11 @@ Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first. A hosted OpenAI-compat
 
 | Path | Holds | In git |
 |---|---|---|
-| `src/pa2pa/` | the app: model client, game engine, runner, runs page | yes |
-| `src/scenarios/` | per scenario: the two prompts and the cases | yes |
-| `src/persuader-strategies/` | the persuader strategies | yes |
-| `src/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
-| `src/models.json` | the models runs can use | yes |
-| `src/runtime/` | llama.cpp and the models, fetched by `scripts/fetch.ps1` | no |
+| `src/` | the app, the `pa2pa` package: model client, game engine, runner, runs page; and `models.json` | yes |
+| `context/scenarios/` | per scenario: the two prompts and the cases | yes |
+| `context/persuader-strategies/` | the persuader strategies | yes |
+| `context/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
+| `runtime/` | llama.cpp and the models, fetched by `scripts/fetch.ps1` | no |
 | `scripts/` | `fetch.ps1` (downloads) and `serve.ps1` (model server) | yes |
 | `docs/notes/` | working notes and decisions | yes |
 | `appdata/` | what runs write: `runs/`, and the model servers' `logs/` | no |

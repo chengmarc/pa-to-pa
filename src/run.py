@@ -17,20 +17,20 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from . import game, llm
-from .paths import RUNS, SRC
+from .paths import CONTEXT, RUNS
 
 TIERS = ["t1_vanilla", "t2_secretary"]
 SETTINGS = ["scenario", "strategy", "tier", "persuader_model", "persuadee_model"]
 
 
 def names(folder):
-    return sorted(p.stem for p in (SRC / folder).glob("*.md") if p.stem != "README")
+    return sorted(p.stem for p in (CONTEXT / folder).glob("*.md") if p.stem != "README")
 
 
 def options():
     """What each setting can be; for models, whether each is reachable now."""
     return {
-        "scenario": sorted(p.parent.name for p in (SRC / "scenarios").glob("*/cases.json")),
+        "scenario": sorted(p.parent.name for p in (CONTEXT / "scenarios").glob("*/cases.json")),
         "strategy": names("persuader-strategies"),
         "tier": TIERS,
         "model": {name: llm.ready(name) for name in llm.models()},
@@ -39,7 +39,7 @@ def options():
 
 def traits():
     """persuadee-personas/index.csv by persona id, if there is one."""
-    path = SRC / "persuadee-personas" / "index.csv"
+    path = CONTEXT / "persuadee-personas" / "index.csv"
     if not path.exists():
         return {}
     with path.open(encoding="utf-8") as f:
@@ -53,7 +53,7 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
         if not llm.ready(s[name]):
             raise RuntimeError(f"{s[name]} isn't reachable; start it with scripts\\serve.ps1 -Model {s[name]}")
     config = game.load(s["scenario"])
-    strategy = (SRC / "persuader-strategies" / f"{s['strategy']}.md").read_text(encoding="utf-8")
+    strategy = (CONTEXT / "persuader-strategies" / f"{s['strategy']}.md").read_text(encoding="utf-8")
     personas, persona_traits = names("persuadee-personas"), traits()
     model = {"persuader": s["persuader_model"], "persuadee": s["persuadee_model"]}
 
@@ -72,7 +72,7 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
         record = {**s, "persona": persona, "traits": persona_traits.get(persona, {}), "case": case["id"],
                   "price_H": case["price_H"], "price_L": case["price_L"], "seed": seed, "guard": guard}
         try:
-            text = (SRC / "persuadee-personas" / f"{persona}.md").read_text(encoding="utf-8")
+            text = (CONTEXT / "persuadee-personas" / f"{persona}.md").read_text(encoding="utf-8")
             record.update(game.play(s["scenario"], config, case, strategy,
                                     text if s["tier"] == "t2_secretary" else None, model,
                                     seed=seed, max_turns=max_turns, guard=guard))

@@ -1,5 +1,5 @@
 # Fetched by scripts/fetch.ps1: llama.cpp and the models
-/src/runtime/
+/runtime/
 
 # Made by scripts/fetch.ps1 on the way: unfinished downloads
 /build/

@@ -14,7 +14,7 @@ import json
 import re
 
 from . import llm
-from .paths import SRC
+from .paths import CONTEXT
 
 ACTION = re.compile(r"\[\[\s*(?:(OFFER)\s*[^\d\]]*([\d,]+(?:\.\d+)?)|(ACCEPT))\s*\]\]", re.IGNORECASE)
 RETRIES = 2   # invalid actions re-asked before the action is dropped and the message counts as talk only
@@ -31,7 +31,7 @@ Negotiate the way your principal would want. This is what you know about them:
 def prompts(scenario, case, currency, strategy, persona, max_turns):
     """The two system prompts: scenarios/<scenario>/{persuader,persuadee}.md filled in for this game.
     persona is the principal's profile text, or None for tier t1_vanilla."""
-    folder = SRC / "scenarios" / scenario
+    folder = CONTEXT / "scenarios" / scenario
     fields = dict(case, currency=currency, max_turns=max_turns)
     persuader = (folder / "persuader.md").read_text(encoding="utf-8").format(**fields, strategy=strategy.strip())
     block = PERSONA.format(text=persona.strip()) if persona is not None else ""
@@ -80,7 +80,7 @@ def history(transcript, role, opening):
 
 def load(scenario):
     """scenarios/<scenario>/cases.json: currency, the persuader's opening cue, and the cases."""
-    return json.loads((SRC / "scenarios" / scenario / "cases.json").read_text(encoding="utf-8"))
+    return json.loads((CONTEXT / "scenarios" / scenario / "cases.json").read_text(encoding="utf-8"))
 
 
 def play(scenario, config, case, strategy, persona, model, seed=0, max_turns=20, guard=False):

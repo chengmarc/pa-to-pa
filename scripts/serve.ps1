@@ -25,8 +25,8 @@ $m = $Models[$Model]
 if (-not $Port) { $Port = $m.Port }
 if (-not $Context) { $Context = $m.Context }
 if (-not $Parallel) { $Parallel = $m.Parallel }
-$Server = Join-Path $Root "src\runtime\llama\llama-server.exe"
-$Gguf = Join-Path $Root "src\runtime\model\$($m.File)"
+$Server = Join-Path $Root "runtime\llama\llama-server.exe"
+$Gguf = Join-Path $Root "runtime\model\$($m.File)"
 $Logs = Join-Path $Root "appdata\logs"
 
 foreach ($f in @($Server, $Gguf)) {

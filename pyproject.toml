@@ -12,5 +12,7 @@ pa2pa-run = "pa2pa.run:main"
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+# src/ is the pa2pa package itself, flat
+[tool.setuptools]
+package-dir = {"pa2pa" = "src"}
+packages = ["pa2pa"]
