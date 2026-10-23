@@ -1,8 +1,8 @@
 """A local page for starting runs and reading their logs: pick the five settings, press Run.
 
-    python pa-to-pa.pyw                 # opens http://127.0.0.1:8090
+    python main.pyw                 # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as python pa-to-pa.pyw run's, logged to results/.
+One run at a time. Runs are the same as python main.pyw run's, logged to results/.
 
 It has no window to close, so it stops itself, and the model server the launcher started for it: on Quit, or once no
 page is open. An open page checks in every few seconds and says goodbye when it closes; with no check-in for 15 s

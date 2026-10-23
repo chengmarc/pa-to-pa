@@ -1,4 +1,4 @@
-"""Minimal client for the models in models.json: local llama-servers (python pa-to-pa.pyw serve) or hosted
+"""Minimal client for the models in models.json: local llama-servers (python main.pyw serve) or hosted
 OpenAI-compatible APIs. Standard library only."""
 import json
 import os
@@ -60,7 +60,7 @@ def why_not(model):
         return None
     except OSError:
         return (f"Not running yet: it loads about 10 s after launch (log: logs/server-{model}.log). "
-                f"To start it by hand: python pa-to-pa.pyw serve {model}")
+                f"To start it by hand: python main.pyw serve {model}")
 
 
 def ready(model):

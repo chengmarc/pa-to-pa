@@ -1,7 +1,7 @@
 """One run: every persona plays one game, with five settings fixed for the run: scenario, persuader strategy,
-persuadee tier, persuader model and persuadee model. The runs page (python pa-to-pa.pyw) starts runs too.
+persuadee tier, persuader model and persuadee model. The runs page (python main.pyw) starts runs too.
 
-    python pa-to-pa.pyw run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
+    python main.pyw run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
 Each run gets a folder results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
@@ -149,7 +149,7 @@ def transcript(record, config):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="pa-to-pa.pyw run", description=__doc__,
+    ap = argparse.ArgumentParser(prog="main.pyw run", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", default="d1_secondhand", choices=list(LABELS["scenario"]))
     ap.add_argument("--strategy", required=True, choices=list(LABELS["strategy"]))

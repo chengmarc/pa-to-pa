@@ -139,7 +139,7 @@ def command(name, context=None, parallel=None):
     --jinja formats messages with the chat template inside the model file."""
     m = local_models()[name]
     if not fetched(name):
-        raise SystemExit(f"{name} isn't downloaded yet: run python pa-to-pa.pyw fetch")
+        raise SystemExit(f"{name} isn't downloaded yet: run python main.pyw fetch")
     LOGS.mkdir(parents=True, exist_ok=True)
     return [str(SERVER), "-m", str(gguf(name)), "--alias", name, "--jinja", "--host", "127.0.0.1",
             "--port", str(port(name)), "-c", str(context or m["context"]), "--parallel", str(parallel or m["parallel"]),

@@ -9,10 +9,10 @@ and logs every transcript.
 Needs Python 3.11+ and nothing else installed: the app is standard library only. Windows needs an NVIDIA GPU with
 6 GB+ of VRAM and a CUDA 12.4+ driver; macOS runs the models on Apple's GPU (Metal), best on Apple silicon.
 
-On Windows, double-click `pa-to-pa.pyw` (`.pyw`: no console window). On macOS, or from any terminal:
+On Windows, double-click `main.pyw` (`.pyw`: no console window). On macOS, or from any terminal:
 
 ```
-python pa-to-pa.pyw          # python3 on macOS
+python main.pyw          # python3 on macOS
 ```
 
 It does what's missing and opens the runs page at `http://127.0.0.1:8090`: the first time, it downloads this
@@ -28,15 +28,15 @@ output and errors go to `logs/pa-to-pa.log`, and an error at launch shows in a m
 The other commands:
 
 ```
-python pa-to-pa.pyw run --strategy sy_voss --tier t2_secretary   # a run from the command line (run --help)
-python pa-to-pa.pyw serve [model]                                # a model server in this window, until Ctrl+C
-python pa-to-pa.pyw fetch                                        # just the downloads
+python main.pyw run --strategy sy_voss --tier t2_secretary   # a run from the command line (run --help)
+python main.pyw serve [model]                                # a model server in this window, until Ctrl+C
+python main.pyw fetch                                        # just the downloads
 ```
 
 ## Runs
 
 A **run** plays one game per persona (45) with five settings fixed: scenario, persuader strategy, persuadee tier,
-persuader model and persuadee model. The page starts them, and so does `python pa-to-pa.pyw run`, which also takes
+persuader model and persuadee model. The page starts them, and so does `python main.pyw run`, which also takes
 `--scenario`, `--persuader-model` and `--persuadee-model` (default `d1_secondhand` and `qwen3.5-9b`).
 
 Each run writes `results/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
@@ -92,12 +92,12 @@ its key) and `model` (its own model id).
 
 | Path | Holds | In git |
 |---|---|---|
-| `pa-to-pa.pyw` | the entry point: loads `src/` as the `pa2pa` package and runs a command | yes |
+| `main.pyw` | the entry point: loads `src/` as the `pa2pa` package and runs a command | yes |
 | `src/` | the app, the `pa2pa` package: commands, runtime (downloads, model servers), model client, game engine, runner, runs page; `models.json` and `labels.json` | yes |
 | `context/scenarios/` | per scenario: the two prompts and the cases | yes |
 | `context/persuader-strategies/` | the persuader strategies | yes |
 | `context/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
-| `runtime/` | llama.cpp and the models, fetched by `python pa-to-pa.pyw fetch` | no |
+| `runtime/` | llama.cpp and the models, fetched by `python main.pyw fetch` | no |
 | `docs/notes/` | working notes and decisions | yes |
 | `results/` | what runs write: a folder per run | no |
 | `logs/` | the launcher's and the model servers' logs | no |

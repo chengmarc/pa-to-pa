@@ -1,9 +1,9 @@
 """PA-to-PA, run with Python 3.11+ on Windows or macOS. Nothing to install: the app is standard library only.
 
-    python pa-to-pa.pyw                     set up what's missing, start the model server, open the runs page
-    python pa-to-pa.pyw run --strategy ... --tier ...   one run from the command line (run --help for the options)
-    python pa-to-pa.pyw serve [model]       serve a local model in this window, until Ctrl+C (default qwen3.5-9b)
-    python pa-to-pa.pyw fetch               download llama.cpp and the models into runtime/ (~6 GB)
+    python main.pyw                     set up what's missing, start the model server, open the runs page
+    python main.pyw run --strategy ... --tier ...   one run from the command line (run --help for the options)
+    python main.pyw serve [model]       serve a local model in this window, until Ctrl+C (default qwen3.5-9b)
+    python main.pyw fetch               download llama.cpp and the models into runtime/ (~6 GB)
 """
 import argparse
 import contextlib
@@ -64,7 +64,7 @@ def launch():
 
 
 def serve(argv):
-    ap = argparse.ArgumentParser(prog="pa-to-pa.pyw serve", description="Serve a local model in this window.")
+    ap = argparse.ArgumentParser(prog="main.pyw serve", description="Serve a local model in this window.")
     ap.add_argument("model", nargs="?", default=MODEL, choices=list(runtime.local_models()))
     ap.add_argument("--context", type=int, help="tokens, shared by the slots (default: the model's in models.json)")
     ap.add_argument("--parallel", type=int, help="slots: games served at once (default: the model's)")

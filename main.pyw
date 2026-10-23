@@ -1,6 +1,5 @@
 """PA-to-PA's entry point. Double-click it on Windows (.pyw: no console window), or run it with
-python pa-to-pa.pyw [run | serve | fetch] (python3 on macOS). The commands are in src/cli.py.
-The hyphen keeps this file from being importable, so it never shadows the package."""
+python main.pyw [run | serve | fetch] (python3 on macOS). The commands are in src/cli.py."""
 import importlib.util
 import sys
 from pathlib import Path
