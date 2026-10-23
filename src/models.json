@@ -1,6 +1,7 @@
 {
-  "_note": "Models a run can use, by name. url: an OpenAI-compatible API base. template_kwargs: chat-template variables sent with every request (the thinking switch). A hosted API also needs api_key_env (the environment variable holding its key) and model (its own model id). local: a model served from runtime/ (python pa-to-pa.pyw serve), which listens on url's port: its file, where python pa-to-pa.pyw fetch downloads it from (pinned to one revision) and its size, the context and slots it's served with, and llama-server's placement arguments.",
+  "_note": "Models a run can use, by name, in the order the page shows them. label: the name on the page. url: an OpenAI-compatible API base. template_kwargs: chat-template variables sent with every request (the thinking switch). A hosted API also needs api_key_env (the environment variable holding its key) and model (its own model id). local: a model served from runtime/ (python pa-to-pa.pyw serve), which listens on url's port: its file, where python pa-to-pa.pyw fetch downloads it from (pinned to one revision) and its size, the context and slots it's served with, and llama-server's placement arguments. slot: a model reserved for later, shown on the page but not usable yet; the text says what's missing.",
   "qwen3.5-9b": {
+    "label": "Qwen3.5-9B (Local)",
     "url": "http://127.0.0.1:8081/v1",
     "template_kwargs": {"enable_thinking": false},
     "local": {
@@ -12,5 +13,17 @@
       "placement": ["-ngl", "99", "--fit", "off"],
       "_placement": "every layer on the GPU: llama.cpp's own fitter keeps ~1 GB spare and would leave some in RAM, at a quarter of the speed. ~7.5 GB of an 8 GB GPU."
     }
+  },
+  "claude-api": {
+    "label": "Claude (API)",
+    "slot": "Not set up yet: needs an Anthropic API key (a Claude Max subscription doesn't include API access) and a client for Anthropic's Messages API, ideally its official SDK.",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "model": "claude-opus-5-5"
+  },
+  "chatgpt-api": {
+    "label": "ChatGPT (API)",
+    "slot": "Not set up yet: needs an OpenAI API key (a ChatGPT or Codex subscription doesn't include API access) and the model id to use.",
+    "url": "https://api.openai.com/v1",
+    "api_key_env": "OPENAI_API_KEY"
   }
 }

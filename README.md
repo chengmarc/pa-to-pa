@@ -66,14 +66,25 @@ Every setting's ids and display labels are in `src/labels.json`:
 
 ## Models
 
-`src/models.json` lists the models a run can use, by name and address. One is local: `qwen3.5-9b`, Qwen3.5-9B Q4_K_M
+`src/models.json` lists the models a run can use, by id, with their labels on the page:
+
+| Id | Label | Status |
+|---|---|---|
+| `qwen3.5-9b` | Qwen3.5-9B (Local) | ready: runs on this machine |
+| `claude-api` | Claude (API) | slot, not set up yet: needs an Anthropic API key and a client for Anthropic's Messages API |
+| `chatgpt-api` | ChatGPT (API) | slot, not set up yet: needs an OpenAI API key and a model id |
+
+A slot shows on the page as a disabled pill whose tooltip says what's missing. API access is billed separately from the
+Claude Max and ChatGPT/Codex subscriptions, which don't include API keys.
+
+The local one is `qwen3.5-9b`, Qwen3.5-9B Q4_K_M
 (5.3 GB), served by llama.cpp b10434 (the CUDA 12.4 build on Windows, the Metal build on macOS) with an
 OpenAI-compatible API on port 8081, entirely on the GPU with 4 slots of 8k tokens. Its file, download link and server
 settings are in its `local` block there. On an RTX 5060 Laptop (8 GB) it generates 56 tok/s alone and 129 tok/s over
 4 games; it uses ~7.5 GB of VRAM, so close GPU-heavy apps first.
 
-A hosted OpenAI-compatible API can be added to `models.json` with `api_key_env` (the environment variable holding its
-key) and `model` (its own model id).
+Another hosted OpenAI-compatible API can be added to `models.json` with `api_key_env` (the environment variable holding
+its key) and `model` (its own model id).
 
 ## Layout
 

@@ -8,7 +8,7 @@ from .paths import SRC
 
 
 def models():
-    """models.json: {name: {url, template_kwargs, [api_key_env, model]}}."""
+    """models.json: {name: {label, url, template_kwargs, [api_key_env, model], [local], [slot]}}."""
     data = json.loads((SRC / "models.json").read_text(encoding="utf-8"))
     return {name: m for name, m in data.items() if not name.startswith("_")}
 
@@ -40,16 +40,29 @@ def chat(model, messages, temperature=0.7, seed=None, max_tokens=None, timeout=6
             "usage": data.get("usage", {})}
 
 
-def ready(model):
-    """Whether the named model can take requests: a local server has loaded it; a hosted API has its key set."""
+def label(model):
+    """The model's name on the page: its label in models.json, else its id."""
+    return models().get(model, {}).get("label", model)
+
+
+def why_not(model):
+    """Why the named model can't take requests right now, or None if it can: a slot isn't set up yet; a hosted API
+    needs its key set; a local server must have loaded it."""
     m = models().get(model)
     if m is None:
-        return False
+        return f"{model} isn't in models.json"
+    if m.get("slot"):
+        return m["slot"]
     if m.get("api_key_env"):
-        return bool(os.environ.get(m["api_key_env"]))
+        return None if os.environ.get(m["api_key_env"]) else f"Set {m['api_key_env']} to its API key."
     try:
         _request(model, "/models", timeout=2)
-        return True
+        return None
     except OSError:
-        return False
+        return (f"Not running yet: it loads about 10 s after launch (log: appdata/logs/server-{model}.log). "
+                f"To start it by hand: python pa-to-pa.pyw serve {model}")
+
+
+def ready(model):
+    return why_not(model) is None
 

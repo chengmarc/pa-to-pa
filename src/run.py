@@ -36,12 +36,15 @@ def names(folder):
 
 def options():
     """Each setting's values in labels.json order, as {id, label, ready}: a scenario or strategy is ready once its
-    folder or file exists in context/, a model once it's reachable."""
+    folder or file exists in context/. Models come in models.json order, with why (the reason one isn't ready) and
+    local (served from runtime/, so not ready may just mean still loading)."""
     exists = {"scenario": lambda v: (CONTEXT / "scenarios" / v / "cases.json").exists(),
               "strategy": lambda v: (CONTEXT / "persuader-strategies" / f"{v}.md").exists(),
               "tier": lambda v: True}
     found = {k: [{"id": v, "label": l, "ready": exists[k](v)} for v, l in LABELS[k].items()] for k in exists}
-    return {**found, "model": [{"id": m, "label": m, "ready": llm.ready(m)} for m in llm.models()]}
+    models = [{"id": m, "label": llm.label(m), "why": llm.why_not(m), "local": "local" in spec}
+              for m, spec in llm.models().items()]
+    return {**found, "model": [{**m, "ready": m["why"] is None} for m in models]}
 
 
 def traits():
@@ -60,8 +63,8 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
         raise RuntimeError(f"{label('scenario', s['scenario'])} isn't built yet: "
                            f"add context\\scenarios\\{s['scenario']}\\")
     for name in ("persuader_model", "persuadee_model"):
-        if not llm.ready(s[name]):
-            raise RuntimeError(f"{s[name]} isn't reachable; start it with python pa-to-pa.pyw serve {s[name]}")
+        if why := llm.why_not(s[name]):
+            raise RuntimeError(f"{llm.label(s[name])}: {why}")
     config = game.load(s["scenario"])
     strategy = (CONTEXT / "persuader-strategies" / f"{s['strategy']}.md").read_text(encoding="utf-8")
     personas, persona_traits = names("persuadee-personas"), traits()
