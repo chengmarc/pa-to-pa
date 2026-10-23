@@ -5,7 +5,7 @@
 
 The grid is case x strategy x persona x tier x seed. Strategies are persuader-strategies/<name>.md, personas
 persuadee-personas/<name>.md.
-Tiers: secretary (the persuadee gets its principal's profile) and vanilla (it doesn't).
+Tiers: t1_vanilla (the persuadee gets no persona) and t2_secretary (it gets its principal's persona).
 """
 import argparse
 import itertools
@@ -34,7 +34,8 @@ def main():
     ap.add_argument("--cases", nargs="*", help="case ids (default: all)")
     ap.add_argument("--strategies", nargs="*", help="persuader-strategies/ names (default: all)")
     ap.add_argument("--personas", nargs="*", help="persuadee-personas/ names (default: all)")
-    ap.add_argument("--tiers", nargs="*", default=["secretary", "vanilla"], choices=["secretary", "vanilla"])
+    ap.add_argument("--tiers", nargs="*", default=["t1_vanilla", "t2_secretary"],
+                    choices=["t1_vanilla", "t2_secretary"])
     ap.add_argument("--seeds", type=int, default=1, help="games per cell")
     ap.add_argument("--max-turns", type=int, default=20, help="messages before it ends with no deal")
     ap.add_argument("--workers", type=int, default=4, help="games at once; match serve.ps1's slots")
@@ -63,7 +64,7 @@ def main():
                   "thinking": args.thinking, "guard": args.guard, "max_turns": args.max_turns}
         try:
             record.update(game.play(args.scenario, config, case, text("persuader-strategies", strategy),
-                                    text("persuadee-personas", persona) if tier == "secretary" else None,
+                                    text("persuadee-personas", persona) if tier == "t2_secretary" else None,
                                     seed=seed, max_turns=args.max_turns, thinking=args.thinking, guard=args.guard))
         except Exception as e:   # one failed game shouldn't stop the run; it's logged with its error
             record["error"] = f"{type(e).__name__}: {e}"
@@ -90,13 +91,13 @@ def summary(records):
     cells = defaultdict(list)
     for r in records:
         cells[(r["strategy"], r["tier"])].append(r)
-    print(f"\n{'strategy':<18}{'tier':<11}{'games':>6}{'deals':>7}{'advance':>9}{'breach':>8}{'errors':>8}")
+    print(f"\n{'strategy':<18}{'tier':<14}{'games':>6}{'deals':>7}{'advance':>9}{'breach':>8}{'errors':>8}")
     for (strategy, tier), rs in sorted(cells.items()):
         deals = [r["outcome"] for r in rs if r.get("outcome", {}).get("deal")]
         advance = sum(o["advance"] for o in deals) / len(deals) if deals else float("nan")
         breach = sum(o["breach"] for o in deals) / len(deals) if deals else float("nan")
         errors = sum("error" in r for r in rs)
-        print(f"{strategy:<18}{tier:<11}{len(rs):>6}{len(deals) / len(rs):>7.0%}{advance:>9.2f}{breach:>8.0%}{errors:>8}")
+        print(f"{strategy:<18}{tier:<14}{len(rs):>6}{len(deals) / len(rs):>7.0%}{advance:>9.2f}{breach:>8.0%}{errors:>8}")
 
 
 if __name__ == "__main__":

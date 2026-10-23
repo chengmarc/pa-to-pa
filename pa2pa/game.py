@@ -31,7 +31,7 @@ Negotiate the way your principal would want. This is what you know about them:
 
 def prompts(scenario, case, currency, strategy, persona, max_turns):
     """The two system prompts: scenarios/<scenario>/{persuader,persuadee}.md filled in for this game.
-    persona is the principal's profile text, or None for the vanilla tier."""
+    persona is the principal's profile text, or None for tier t1_vanilla."""
     folder = ROOT / "scenarios" / scenario
     fields = dict(case, currency=currency, max_turns=max_turns)
     persuader = (folder / "persuader.md").read_text(encoding="utf-8").format(**fields, strategy=strategy.strip())

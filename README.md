@@ -61,7 +61,7 @@ How a game works (`pa2pa/game.py`, prompts in `scenarios/<scenario>/`):
   the game as a no-deal: it has no price or advance, and the summary reports the deal rate separately.
 - Score: `advance = (price_H − price) / (price_H − price_L)`. 0 = closed at the listed price, 1 = at the seller's
   floor, above 1 = below it.
-- Tiers: `secretary` puts the principal's persona in the persuadee's prompt; `vanilla` leaves it out.
+- Tiers: `t1_vanilla` leaves the persona out; `t2_secretary` puts the principal's persona in the persuadee's prompt.
 
 ## Layout
 
