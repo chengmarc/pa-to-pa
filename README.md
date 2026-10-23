@@ -6,18 +6,20 @@ and logs every transcript.
 
 ## Quick start
 
-Once per clone (Windows, an NVIDIA GPU with 6 GB+ of VRAM and a CUDA 12.4+ driver, Python 3.11+):
+Needs Windows, an NVIDIA GPU with 6 GB+ of VRAM and a CUDA 12.4+ driver, and Python 3.11+.
+
+**Double-click `pa2pa-ui.cmd`.** It does what's missing and opens the runs page at `http://127.0.0.1:8090`: the
+first time it downloads llama.cpp and the models into `runtime\` (~19 GB) and installs the `pa2pa` package; every
+time it starts the Qwen3.5-9B server in its own minimised window, if it isn't running, and waits for it to load.
+Pick five settings and press Run. Closing the page's window stops the page; the model server keeps running.
+
+The same steps by hand (`scripts\start.ps1` runs them):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1   # llama.cpp and the models into runtime\ (~19 GB)
+powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1   # llama.cpp and the models into runtime\
 pip install -e .                                             # the pa2pa-ui and pa2pa-run commands
-```
-
-Then start a model server, and in a second terminal the runs page:
-
-```powershell
 powershell -ExecutionPolicy Bypass -File scripts\serve.ps1   # Qwen3.5-9B on port 8081; Ctrl+C stops it
-pa2pa-ui                                                     # http://127.0.0.1:8090: pick five settings, press Run
+pa2pa-ui                                                     # the runs page, in a second terminal
 ```
 
 ## Runs
@@ -26,7 +28,7 @@ A **run** plays one game per persona (45) with five settings fixed: scenario, pe
 persuader model and persuadee model. The page starts them, and so does the command line:
 
 ```powershell
-pa2pa-run --strategy voss --tier t2_secretary [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
+pa2pa-run --strategy sy_voss --tier t2_secretary [--scenario p1_secondhand] [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
 ```
 
 Each run writes `appdata/runs/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
@@ -45,7 +47,16 @@ How a game works (`src/game.py`, prompts in `context/scenarios/<scenario>/`):
   the game as a no-deal: it has no price or advance, and the summary reports the deal rate separately.
 - Score: `advance = (price_H − price) / (price_H − price_L)`. 0 = closed at the listed price, 1 = at the seller's
   floor, above 1 = below it.
-- Tiers: `t1_vanilla` leaves the persona out; `t2_secretary` puts the principal's persona in the persuadee's prompt.
+- Persuadee strategies: `t1_vanilla` (Not Personalized) leaves the persona out; `t2_secretary` (Personalized) puts
+  the principal's persona in the persuadee's prompt.
+
+Every setting's ids and display labels are in `src/labels.json`:
+
+| Setting | Values (id: label) |
+|---|---|
+| Scenario | `p1_secondhand`: Secondhand Item · `p2_salary`: Base Salary (not built yet) · `p3_total_comp`: Total Compensation (not built yet) |
+| Persuader strategy | `s0_none`: None · `s1_generic`: Generic · `sx_fisher_ury`: Fisher-Ury · `sy_voss`: Voss |
+| Persuadee strategy | `t1_vanilla`: Not Personalized · `t2_secretary`: Personalized |
 
 ## Models
 
@@ -65,12 +76,13 @@ Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first. A hosted OpenAI-compat
 
 | Path | Holds | In git |
 |---|---|---|
-| `src/` | the app, the `pa2pa` package: model client, game engine, runner, runs page; and `models.json` | yes |
+| `src/` | the app, the `pa2pa` package: model client, game engine, runner, runs page; `models.json` and `labels.json` | yes |
 | `context/scenarios/` | per scenario: the two prompts and the cases | yes |
 | `context/persuader-strategies/` | the persuader strategies | yes |
 | `context/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
 | `runtime/` | llama.cpp and the models, fetched by `scripts/fetch.ps1` | no |
-| `scripts/` | `fetch.ps1` (downloads) and `serve.ps1` (model server) | yes |
+| `scripts/` | `start.ps1` (what `pa2pa-ui.cmd` runs), `fetch.ps1` (downloads), `serve.ps1` (model server) | yes |
+| `pa2pa-ui.cmd` | the double-click entry point | yes |
 | `docs/notes/` | working notes and decisions | yes |
 | `appdata/` | what runs write: `runs/`, and the model servers' `logs/` | no |
 | `build/` | unfinished downloads | no |

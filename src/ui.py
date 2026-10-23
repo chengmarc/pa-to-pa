@@ -75,8 +75,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(404, {"error": "not found"})
         settings = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
         opts = run.options()
-        allowed = {"scenario": opts["scenario"], "strategy": opts["strategy"], "tier": opts["tier"],
-                   "persuader_model": list(opts["model"]), "persuadee_model": list(opts["model"])}
+        ready = {k: [o["id"] for o in values if o["ready"]] for k, values in opts.items()}
+        allowed = {**ready, "persuader_model": ready["model"], "persuadee_model": ready["model"]}
         bad = [k for k in run.SETTINGS if settings.get(k) not in allowed[k]]
         if bad:
             return self.send(400, {"error": "choose " + ", ".join(bad)})

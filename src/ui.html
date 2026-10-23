@@ -81,13 +81,23 @@
 
 <script>
 const GROUPS = [
-  ["scenario", "Scenario"], ["strategy", "Persuader strategy"], ["tier", "Persuadee tier"],
+  ["scenario", "Scenario"], ["strategy", "Persuader strategy"], ["tier", "Persuadee strategy"],
   ["persuader_model", "Persuader model"], ["persuadee_model", "Persuadee model"],
 ];
 const pick = {};
 let options = null, shown = null, busy = false, last = null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+
+// options[kind]: [{id, label, ready}]; a model setting's kind is "model"
+const kind = key => key.endsWith("_model") ? "model" : key;
+const find = (key, id) => options && (options[kind(key)] || []).find(o => o.id === id);
+const lab = (key, id) => (find(key, id) || {label: id}).label;   // a run from before a rename shows its id
+const WHY_OFF = {
+  model: id => `Not running: start it with scripts\\serve.ps1 -Model ${id}`,
+  scenario: id => `Not built yet: add context\\scenarios\\${id}\\`,
+  strategy: id => `Not written yet: add context\\persuader-strategies\\${id}.md`,
+};
 
 function remember() { try { localStorage.setItem("pick", JSON.stringify(pick)); } catch (e) {} }
 function recall() { try { return JSON.parse(localStorage.getItem("pick")) || {}; } catch (e) { return {}; } }
@@ -96,14 +106,11 @@ async function loadOptions() {
   options = await (await fetch("/api/options")).json();
   const saved = recall();
   $("groups").innerHTML = GROUPS.map(([key, label]) => {
-    const isModel = key.endsWith("_model");
-    const values = isModel ? Object.keys(options.model) : options[key];
-    if (!values.includes(pick[key])) pick[key] = values.includes(saved[key]) ? saved[key] : (values.length === 1 ? values[0] : undefined);
-    const pills = values.map(v => {
-      const off = isModel && !options.model[v];
-      return `<button class="pill" data-key="${key}" data-value="${esc(v)}" aria-pressed="${pick[key] === v}"
-              ${off ? 'disabled title="Not running: start it with scripts\\serve.ps1 -Model ' + esc(v) + '"' : ""}>${esc(v)}</button>`;
-    }).join("");
+    const values = options[kind(key)], ready = values.filter(o => o.ready).map(o => o.id);
+    if (!ready.includes(pick[key])) pick[key] = ready.includes(saved[key]) ? saved[key] : (ready.length === 1 ? ready[0] : undefined);
+    const pills = values.map(o => `<button class="pill" data-key="${key}" data-value="${esc(o.id)}"
+        aria-pressed="${pick[key] === o.id}" title="${esc(o.ready ? o.id : WHY_OFF[kind(key)](o.id))}"
+        ${o.ready ? "" : "disabled"}>${esc(o.label)}</button>`).join("");
     return `<div class="group"><label>${label}</label><div class="pills">${pills}</div></div>`;
   }).join("");
   for (const b of document.querySelectorAll(".pill")) {
@@ -114,7 +121,7 @@ async function loadOptions() {
 
 function refreshButton() {
   const missing = GROUPS.filter(([k]) => !pick[k]).map(([, l]) => l.toLowerCase());
-  const down = options && ["persuader_model", "persuadee_model"].filter(k => pick[k] && !options.model[pick[k]]);
+  const down = options && ["persuader_model", "persuadee_model"].filter(k => pick[k] && !(find(k, pick[k]) || {}).ready);
   $("run").disabled = busy || missing.length > 0 || (down && down.length > 0);
   $("run").textContent = busy ? "Running…" : "Run";
   if (busy) setMsg("");
@@ -152,7 +159,7 @@ function renderHistory(runs) {
     const s = r.settings, st = summarize(r);
     const status = r.status === "running" ? (busy ? `running ${st.done}/${r.games}` : "interrupted") : `${st.deals}/${r.games} deals`;
     return `<button data-folder="${esc(r.folder)}" class="${r.folder === shown ? "on" : ""}">
-      ${esc(s.strategy)} · ${esc(s.tier)}<small>${esc(s.scenario)} · ${esc(s.persuader_model)} vs ${esc(s.persuadee_model)}</small>
+      ${esc(lab("strategy", s.strategy))} · ${esc(lab("tier", s.tier))}<small>${esc(lab("scenario", s.scenario))} · ${esc(s.persuader_model)} vs ${esc(s.persuadee_model)}</small>
       <small>${esc(r.started)} · ${status}</small></button>`;
   }).join("") : '<p class="msg">No runs yet.</p>';
   for (const b of $("history").querySelectorAll("button")) b.onclick = () => { shown = b.dataset.folder; render(); };
@@ -170,7 +177,7 @@ function renderDetail(r) {
       <td><a href="${link(p + ".md")}" target="_blank">transcript</a> · <a href="${link(p + ".json")}" target="_blank">json</a></td></tr>`;
   }).join("");
   $("detail").innerHTML = `
-    <strong>${esc(s.strategy)} · ${esc(s.tier)} · ${esc(s.scenario)}</strong>
+    <strong>${esc(lab("strategy", s.strategy))} · ${esc(lab("tier", s.tier))} · ${esc(lab("scenario", s.scenario))}</strong>
     <div class="msg">${esc(s.persuader_model)} (persuader) vs ${esc(s.persuadee_model)} (persuadee) · started ${esc(r.started)}</div>
     <div class="bar"><div style="width:${100 * st.done / r.games}%"></div></div>
     <div class="stats">

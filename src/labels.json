@@ -1,0 +1,18 @@
+{
+  "_note": "Every value a run's settings can take: its id (file and folder names, CLI flags, logs) and its label (the runs page, transcripts), in the order the page shows them. A scenario or strategy listed here is available once its folder or file exists in context/.",
+  "scenario": {
+    "p1_secondhand": "Secondhand Item",
+    "p2_salary": "Base Salary",
+    "p3_total_comp": "Total Compensation"
+  },
+  "strategy": {
+    "s0_none": "None",
+    "s1_generic": "Generic",
+    "sx_fisher_ury": "Fisher-Ury",
+    "sy_voss": "Voss"
+  },
+  "tier": {
+    "t1_vanilla": "Not Personalized",
+    "t2_secretary": "Personalized"
+  }
+}

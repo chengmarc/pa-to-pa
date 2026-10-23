@@ -1,7 +1,7 @@
 """One run: every persona plays one game, with five settings fixed for the run: scenario, persuader strategy,
 persuadee tier, persuader model and persuadee model. The runs page (pa2pa-ui) starts runs too.
 
-    pa2pa-run --scenario secondhand --strategy voss --tier t2_secretary \
+    pa2pa-run --scenario p1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
 Each run gets a folder appdata/runs/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
@@ -17,10 +17,17 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from . import game, llm
-from .paths import CONTEXT, RUNS
+from .paths import CONTEXT, RUNS, SRC
 
-TIERS = ["t1_vanilla", "t2_secretary"]
 SETTINGS = ["scenario", "strategy", "tier", "persuader_model", "persuadee_model"]
+LABELS = {k: v for k, v in json.loads((SRC / "labels.json").read_text(encoding="utf-8")).items()
+          if not k.startswith("_")}
+TIERS = list(LABELS["tier"])
+
+
+def label(kind, value):
+    """A setting's display label from labels.json; its id if it has none (e.g. a run from before a rename)."""
+    return LABELS.get(kind, {}).get(value, value)
 
 
 def names(folder):
@@ -28,13 +35,13 @@ def names(folder):
 
 
 def options():
-    """What each setting can be; for models, whether each is reachable now."""
-    return {
-        "scenario": sorted(p.parent.name for p in (CONTEXT / "scenarios").glob("*/cases.json")),
-        "strategy": names("persuader-strategies"),
-        "tier": TIERS,
-        "model": {name: llm.ready(name) for name in llm.models()},
-    }
+    """Each setting's values in labels.json order, as {id, label, ready}: a scenario or strategy is ready once its
+    folder or file exists in context/, a model once it's reachable."""
+    exists = {"scenario": lambda v: (CONTEXT / "scenarios" / v / "cases.json").exists(),
+              "strategy": lambda v: (CONTEXT / "persuader-strategies" / f"{v}.md").exists(),
+              "tier": lambda v: True}
+    found = {k: [{"id": v, "label": l, "ready": exists[k](v)} for v, l in LABELS[k].items()] for k in exists}
+    return {**found, "model": [{"id": m, "label": m, "ready": llm.ready(m)} for m in llm.models()]}
 
 
 def traits():
@@ -49,6 +56,8 @@ def traits():
 def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
     """Plays the run and returns its folder. on_game(record) is called as each game finishes."""
     s = settings
+    if not (CONTEXT / "scenarios" / s["scenario"] / "cases.json").exists():
+        raise RuntimeError(f"{label('scenario', s['scenario'])} isn't built yet: add context\\scenarios\\{s['scenario']}\\")
     for name in ("persuader_model", "persuadee_model"):
         if not llm.ready(s[name]):
             raise RuntimeError(f"{s[name]} isn't reachable; start it with scripts\\serve.ps1 -Model {s[name]}")
@@ -114,7 +123,8 @@ def transcript(record, config):
     """The game as a readable Markdown page."""
     roles, c = config.get("roles", {}), config["currency"]
     who = {r: f"{r.capitalize()} ({roles[r]})" if r in roles else r.capitalize() for r in ("persuader", "persuadee")}
-    lines = [f"# {record['persona']} · {record['case']} · {record['strategy']} · {record['tier']}", "",
+    lines = [f"# {record['persona']} · {label('scenario', record['scenario'])} ({record['case']}) · "
+             f"{label('strategy', record['strategy'])} · {label('tier', record['tier'])}", "",
              f"- {who['persuader']}: {record['persuader_model']}, cap {c}{record['price_H']:g} (the listed price)",
              f"- {who['persuadee']}: {record['persuadee_model']}, floor {c}{record['price_L']:g}"]
     if "error" in record:
@@ -136,8 +146,8 @@ def transcript(record, config):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--scenario", default="secondhand")
-    ap.add_argument("--strategy", required=True, help="a persuader-strategies/ name")
+    ap.add_argument("--scenario", default="p1_secondhand", choices=list(LABELS["scenario"]))
+    ap.add_argument("--strategy", required=True, choices=list(LABELS["strategy"]))
     ap.add_argument("--tier", required=True, choices=TIERS)
     ap.add_argument("--persuader-model", default="qwen3.5-9b", help="a models.json name")
     ap.add_argument("--persuadee-model", default="qwen3.5-9b", help="a models.json name")
@@ -153,7 +163,10 @@ def main():
         print(f"{r['persona']} {r['case']}: " + (r["error"] if "error" in r else
               f"deal at {o['price']:g}, advance {o['advance']:.2f}" if o["deal"] else "no deal"), flush=True)
 
-    folder = start(settings, args.workers, args.seed, args.max_turns, args.guard, on_game=show)
+    try:
+        folder = start(settings, args.workers, args.seed, args.max_turns, args.guard, on_game=show)
+    except RuntimeError as e:   # a setting that isn't ready: say which, without a traceback
+        raise SystemExit(str(e))
     print(f"\n{json.loads((folder / 'run.json').read_text(encoding='utf-8'))['summary']}\nLogs: {folder}")
 
 
