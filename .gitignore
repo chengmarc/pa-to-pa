@@ -18,3 +18,11 @@ node_modules/
 # Secrets
 .env
 *.key
+
+# Downloaded by scripts/fetch.ps1 (or copied from agent-2b): llama.cpp and the model
+/runtime/
+/model/
+/build/
+
+# Made by scripts/serve.ps1
+/logs/
