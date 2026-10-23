@@ -35,9 +35,10 @@ python main.pyw fetch                                        # just the download
 
 ## Runs
 
-A **run** plays one game per persona (45) with five settings fixed: scenario, persuader strategy, persuadee tier,
-persuader model and persuadee model. The page starts them, and so does `python main.pyw run`, which also takes
-`--scenario`, `--persuader-model` and `--persuadee-model` (default `d1_secondhand` and `qwen3.5-9b`).
+A **run** plays one game per persona file in `context/persuadee-personas/`, however many there are, with five
+settings fixed: scenario, persuader strategy, persuadee tier, persuader model and persuadee model. The page starts
+them, and so does `python main.pyw run`, which also takes `--scenario`, `--persuader-model` and `--persuadee-model`
+(default `d1_secondhand` and `qwen3.5-9b`).
 
 Each run writes `results/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
 persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and rejected
