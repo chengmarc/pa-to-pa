@@ -51,14 +51,22 @@
   button.run:disabled { opacity: .5; cursor: not-allowed; }
   .msg { color: var(--muted); }
   .msg.error { color: var(--bad); }
-  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
   @media (max-width: 760px) { .layout, .group { grid-template-columns: 1fr; } }
-  .history { max-height: 640px; overflow: auto; padding: 8px; }
-  .history button { display: block; width: 100%; text-align: left; border: 0; background: none; color: var(--text);
-                    padding: 8px; border-radius: 6px; font: inherit; cursor: pointer; }
+  .history { max-height: 640px; overflow: auto; padding: 0; }
+  .history h2 { margin: 0; padding: 12px 14px 8px; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+                text-transform: uppercase; color: var(--muted); }
+  .history button { display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--line);
+                    background: none; color: var(--text); padding: 10px 14px; font: inherit; cursor: pointer; }
   .history button:hover { background: var(--pill); }
-  .history button.on { background: var(--pill); outline: 1px solid var(--line); }
-  .history small { display: block; color: var(--muted); }
+  .history button.on { background: var(--pill); box-shadow: inset 3px 0 var(--accent); }
+  .history .name { font-weight: 600; line-height: 1.35; }
+  .history .meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .history .row { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12.5px;
+                  margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .history .row .when { white-space: nowrap; }
+  .history .running { color: var(--accent); }
+  .history .msg { padding: 0 14px 12px; }
   .stats { display: flex; flex-wrap: wrap; gap: 20px; margin: 8px 0 14px; }
   .stat b { display: block; font-size: 20px; }
   .stat span { color: var(--muted); font-size: 12px; }
@@ -191,14 +199,25 @@ function summarize(r) {
 // a run's name: scenario · persuader strategy · persuadee strategy, by their labels
 const title = s => [lab("scenario", s.scenario), lab("strategy", s.strategy), lab("tier", s.tier)].map(esc).join(" · ");
 
+// "2026-10-23 13:08:54" -> "Oct 23, 13:08" in the viewer's locale
+const when = t => new Date(t.replace(" ", "T")).toLocaleString(undefined,
+  {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false});
+
+// the models of a run: once if both sides use the same one
+const models = s => s.persuader_model === s.persuadee_model ? lab("persuader_model", s.persuader_model)
+  : `${lab("persuader_model", s.persuader_model)} vs ${lab("persuadee_model", s.persuadee_model)}`;
+
+// Past runs, one entry each: what differs between runs first (the strategies), then scenario and model, then results.
 function renderHistory(runs) {
-  $("history").innerHTML = runs.length ? runs.map(r => {
+  $("history").innerHTML = `<h2>Past runs${runs.length ? ` · ${runs.length}` : ""}</h2>` + (runs.length ? runs.map(r => {
     const s = r.settings, st = summarize(r);
-    const status = r.status === "running" ? (busy ? `running ${st.done}/${r.games}` : "interrupted") : `${st.deals}/${r.games} deals`;
+    const result = r.status !== "running" ? `${st.deals}/${r.games} deals · advance ${num(st.advance)}`
+      : busy ? `<span class="running">Running ${st.done}/${r.games}</span>` : "Interrupted";
     return `<button data-folder="${esc(r.folder)}" class="${r.folder === shown ? "on" : ""}">
-      ${title(s)}<small>${esc(lab("persuader_model", s.persuader_model))} vs ${esc(lab("persuadee_model", s.persuadee_model))}</small>
-      <small>${esc(r.started)} · ${status}</small></button>`;
-  }).join("") : '<p class="msg">No runs yet.</p>';
+      <div class="name">${esc(lab("strategy", s.strategy))} · ${esc(lab("tier", s.tier))}</div>
+      <div class="meta">${esc(lab("scenario", s.scenario))} · ${esc(models(s))}</div>
+      <div class="row"><span>${result}</span><span class="when">${esc(when(r.started))}</span></div></button>`;
+  }).join("") : '<p class="msg">No runs yet.</p>');
   for (const b of $("history").querySelectorAll("button")) b.onclick = () => { shown = b.dataset.folder; render(); };
 }
 
