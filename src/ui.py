@@ -2,7 +2,7 @@
 
     python pa-to-pa.pyw                 # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as python pa-to-pa.pyw run's, logged to appdata/results/.
+One run at a time. Runs are the same as python pa-to-pa.pyw run's, logged to results/.
 
 It has no window to close, so it stops itself, and the model server the launcher started for it: on Quit, or once no
 page is open. An open page checks in every few seconds and says goodbye when it closes; with no check-in for 15 s
@@ -59,7 +59,7 @@ def options():
             m.update(starting=True, why="Starting: loading the model, usually about 10 s.")
         else:
             m["why"] = (f"The model server stopped while starting (exit code {code}); see "
-                        f"appdata/logs/server-{m['id']}.log. With too little free GPU memory it can't load: close "
+                        f"logs/server-{m['id']}.log. With too little free GPU memory it can't load: close "
                         "GPU-heavy apps and launch again.")
     return opts
 
@@ -107,7 +107,7 @@ class Handler(BaseHTTPRequestHandler):
             seen["last"] = time.monotonic()
             self.send(200, {**state, "runs": runs()})
         elif self.path.startswith("/results/"):
-            # /results/<folder>/<file>: a log, only from inside appdata/results
+            # /results/<folder>/<file>: a log, only from inside results
             parts = self.path.split("/")[2:]
             path = RESULTS.joinpath(*parts).resolve() if len(parts) == 2 else None
             if path and path.parent.parent == RESULTS.resolve() and path.suffix in (".md", ".json") and path.is_file():

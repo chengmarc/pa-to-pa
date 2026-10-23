@@ -59,7 +59,7 @@ def why_not(model):
         _request(model, "/models", timeout=2)
         return None
     except OSError:
-        return (f"Not running yet: it loads about 10 s after launch (log: appdata/logs/server-{model}.log). "
+        return (f"Not running yet: it loads about 10 s after launch (log: logs/server-{model}.log). "
                 f"To start it by hand: python pa-to-pa.pyw serve {model}")
 
 

@@ -57,7 +57,7 @@ def launch():
             runtime.fetch()
     server = None
     if not llm.ready(MODEL):
-        print(f"== Starting the {MODEL} server (log: appdata/logs/server-{MODEL}.log) ==")
+        print(f"== Starting the {MODEL} server (log: logs/server-{MODEL}.log) ==")
         server = runtime.start(MODEL)
     # the page shows the model as starting until it has loaded, and Quit stops it too
     ui.main(MODEL if server else None, server)

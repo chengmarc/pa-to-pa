@@ -156,7 +156,7 @@ def serve(name, context=None, parallel=None):
 
 def start(name):
     """A model server in the background, with no window, that outlives this process unless stopped: its output in
-    appdata/logs/server-<name>.out. Returns its process, for stopping it."""
+    logs/server-<name>.out. Returns its process, for stopping it."""
     cmd = command(name)
     # Windows: no console window of its own; macOS: a session of its own, so closing Terminal doesn't stop it.
     detach = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {"start_new_session": True}

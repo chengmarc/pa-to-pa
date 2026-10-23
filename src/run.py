@@ -4,7 +4,7 @@ persuadee tier, persuader model and persuadee model. The runs page (python pa-to
     python pa-to-pa.pyw run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
-Each run gets a folder appdata/results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
+Each run gets a folder results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
 <persona>.md (the readable transcript) and <persona>.json (the full record, with reasoning and rejected attempts).
 Each persona always gets the same case: the cases are dealt out over the personas in order (p_01 the first case, p_02
 the second, ...), so runs compare persona by persona.

@@ -29,7 +29,7 @@ if __name__ == "__main__":
         (show_error if windowless else sys.exit)("PA-to-PA needs Python 3.11 or newer.")
         sys.exit(1)
     if windowless:   # what would have been printed goes to a log instead
-        log = ROOT / "appdata" / "logs" / "pa-to-pa.log"
+        log = ROOT / "logs" / "pa-to-pa.log"
         log.parent.mkdir(parents=True, exist_ok=True)
         sys.stdout = sys.stderr = log.open("a", encoding="utf-8", buffering=1)
     load_package()
@@ -45,5 +45,5 @@ if __name__ == "__main__":
             raise
         message = str(e) if isinstance(e, SystemExit) else f"{type(e).__name__}: {e}"
         print(message)
-        show_error(message + "\n\nMore in appdata\\logs\\pa-to-pa.log.")
+        show_error(message + "\n\nMore in logs\\pa-to-pa.log.")
         sys.exit(1)

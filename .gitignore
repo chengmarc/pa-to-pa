@@ -4,8 +4,9 @@
 # Made by python pa2pa.py fetch on the way: unfinished downloads
 /build/
 
-# Written as the app runs: run results and model-server logs
-/appdata/
+# Written as the app runs: run results, and the launcher's and model servers' logs
+/results/
+/logs/
 
 # Python
 __pycache__/
