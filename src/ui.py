@@ -2,11 +2,16 @@
 
     python pa-to-pa.pyw                 # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as python pa-to-pa.pyw run's, logged to appdata/results/. Quit on the page stops
-it, and the model server the launcher started for it; with no window to close, that's how it stops.
+One run at a time. Runs are the same as python pa-to-pa.pyw run's, logged to appdata/results/.
+
+It has no window to close, so it stops itself, and the model server the launcher started for it: on Quit, or once no
+page is open. An open page checks in every few seconds and says goodbye when it closes; with no check-in for 15 s
+after a goodbye (a reload checks in again at once), or for 3 minutes at all (a closed browser may not say goodbye), it
+stops. Never during a run: it stops after the run instead.
 """
 import json
 import threading
+import time
 import traceback
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -20,6 +25,26 @@ PAGE = Path(__file__).with_name("ui.html")
 state = {"busy": False, "error": None}   # the run in progress, if any, and why the last one failed to start or finish
 page = {"server": None}   # main()'s server, for Quit
 launched = {"model": None, "process": None}   # the model server the launcher started for this page, if it did
+seen = {"last": time.monotonic(), "bye": None}   # when an open page last checked in, and said goodbye
+IDLE, BYE_GRACE = 180, 15   # seconds without a check-in before stopping: at all, and after a goodbye
+
+
+def stop():
+    """Stops the model server the launcher started, then the page."""
+    if launched["process"]:
+        launched["process"].terminate()
+    page["server"].shutdown()
+
+
+def watch():
+    """Stops everything once no page is open (module docstring), checking every few seconds."""
+    while True:
+        time.sleep(5)
+        now, last, bye = time.monotonic(), seen["last"], seen["bye"]
+        closed = bye is not None and last < bye and now - bye > BYE_GRACE
+        if not state["busy"] and (closed or now - last > IDLE):
+            print("No page open; stopping.")
+            return stop()
 
 
 def options():
@@ -78,7 +103,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
         elif self.path == "/api/options":
             self.send(200, options())
-        elif self.path == "/api/state":
+        elif self.path == "/api/state":   # the page's regular poll: its check-in
+            seen["last"] = time.monotonic()
             self.send(200, {**state, "runs": runs()})
         elif self.path.startswith("/results/"):
             # /results/<folder>/<file>: a log, only from inside appdata/results
@@ -94,6 +120,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/api/quit":
             return self.quit()
+        if self.path == "/api/bye":   # a page closing (or reloading)
+            seen["bye"] = time.monotonic()
+            return self.send(200, {})
         if self.path != "/api/run":
             return self.send(404, {"error": "not found"})
         settings = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
@@ -112,11 +141,6 @@ class Handler(BaseHTTPRequestHandler):
         if state["busy"]:
             return self.send(409, {"error": "a run is in progress; quit when it's done"})
         self.send(200, {"stopped": True})
-
-        def stop():
-            if launched["process"]:
-                launched["process"].terminate()
-            page["server"].shutdown()
         threading.Thread(target=stop).start()
 
     def log_message(self, *args):
@@ -124,13 +148,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main(model=None, process=None):
-    """Serves the page until Quit or Ctrl+C. model and process: the model server the launcher started for the page,
-    shown as starting until it has loaded, and stopped by Quit."""
+    """Serves the page until Quit, no page is open, or Ctrl+C. model and process: the model server the launcher
+    started for the page, shown as starting until it has loaded, and stopped with the page."""
     server = ThreadingHTTPServer(ADDRESS, Handler)
     page["server"] = server
     launched.update(model=model, process=process)
     url = f"http://{ADDRESS[0]}:{ADDRESS[1]}"
-    print(f"Runs page at {url} (Quit on the page, or Ctrl+C, stops it)")
+    print(f"Runs page at {url} (Quit on the page, closing it, or Ctrl+C stops it)")
+    seen["last"] = time.monotonic()
+    threading.Thread(target=watch, daemon=True).start()
     webbrowser.open(url)
     try:
         server.serve_forever()

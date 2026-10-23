@@ -21,8 +21,9 @@ the progress); every time, it starts the Qwen3.5-9B server in the background if 
 straight away, with a spinner on the model while it loads (about 10 s), then enables it. Pick five settings and press
 Run.
 
-**Quit** on the page stops the page and the model server it started. Without a console, output and errors go to
-`appdata/logs/pa-to-pa.log`, and an error at launch shows in a message box.
+**Quit** on the page stops the page and the model server it started. So does closing the page: about 15 s after the
+tab closes, or within 3 minutes if the whole browser closes. A run in progress finishes first. Without a console,
+output and errors go to `appdata/logs/pa-to-pa.log`, and an error at launch shows in a message box.
 
 The other commands:
 

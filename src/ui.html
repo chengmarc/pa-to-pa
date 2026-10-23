@@ -256,6 +256,9 @@ $("quit").onclick = async () => {
     '<h1>PA-to-PA runs</h1><p class="sub">Stopped, with the model server it started. You can close this tab.</p>';
 };
 
+// closing (or reloading) the page says goodbye; with no page checking in after it, the servers stop (src/ui.py)
+window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));
+
 loadOptions().then(poll);
 </script>
 </body>
