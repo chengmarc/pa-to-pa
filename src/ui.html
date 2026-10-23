@@ -215,7 +215,8 @@ function renderDetail(r) {
   }).join("");
   $("detail").innerHTML = `
     <strong>${title(s)}</strong>
-    <div class="msg">${esc(lab("persuader_model", s.persuader_model))} (persuader) vs ${esc(lab("persuadee_model", s.persuadee_model))} (persuadee) · started ${esc(r.started)}</div>
+    <div class="msg">Persuader: ${esc(lab("persuader_model", s.persuader_model))} · Persuadee: ${esc(lab("persuadee_model", s.persuadee_model))}</div>
+    <div class="msg">Started ${esc(r.started)}</div>
     <div class="bar"><div style="width:${100 * st.done / r.games}%"></div></div>
     <div class="stats">
       <div class="stat"><b>${st.done}/${r.games}</b><span>games played</span></div>
