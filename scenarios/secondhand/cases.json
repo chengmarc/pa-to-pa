@@ -1,0 +1,28 @@
+{
+  "_note": "Placeholder cases. price_H: the buyer's hidden maximum and the listed price. price_L: the seller's hidden minimum. price_H > price_L, so a deal is always possible.",
+  "currency": "$",
+  "opening": "The seller is in the chat now. Send your first message.",
+  "cases": [
+    {
+      "id": "bike",
+      "item": "Road bicycle",
+      "description": "Aluminium-frame road bike, size 54, two years old. New tyres and chain last month. A few scratches on the top tube.",
+      "price_H": 400,
+      "price_L": 280
+    },
+    {
+      "id": "camera",
+      "item": "Mirrorless camera with kit lens",
+      "description": "Mirrorless camera body with an 18-55 mm kit lens, about 8,000 shutter clicks. Original box, charger and two batteries.",
+      "price_H": 650,
+      "price_L": 480
+    },
+    {
+      "id": "sofa",
+      "item": "Three-seat sofa",
+      "description": "Grey fabric three-seat sofa, four years old, from a non-smoking home. Removable covers, washed recently. Buyer collects.",
+      "price_H": 300,
+      "price_L": 180
+    }
+  ]
+}

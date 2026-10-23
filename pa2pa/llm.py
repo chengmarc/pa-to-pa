@@ -1,6 +1,6 @@
-"""Minimal client for the local gpt-oss-20b server (scripts/serve.ps1). Standard library only.
+"""Minimal client for the local model server (scripts/serve.ps1). Standard library only.
 
-    python scripts/llm.py            # smoke test: one short exchange
+    python -m pa2pa.llm              # smoke test: one short exchange
 """
 import json
 import urllib.request
@@ -8,18 +8,15 @@ import urllib.request
 SERVER = "http://127.0.0.1:8081"
 
 
-def chat(messages, reasoning_effort="low", temperature=1.0, seed=None, max_tokens=None, timeout=600):
+def chat(messages, template_kwargs=None, temperature=0.7, seed=None, max_tokens=None, timeout=600):
     """One chat completion. Returns {"content", "reasoning", "usage"}.
 
-    reasoning_effort ("low" | "medium" | "high") is a variable of gpt-oss's chat template, so it goes in
-    chat_template_kwargs rather than as an OpenAI parameter.
+    template_kwargs are variables of the model's chat template, which is where each model takes its thinking switch:
+    Qwen3.5 {"enable_thinking": False}; gpt-oss {"reasoning_effort": "low" | "medium" | "high"}.
     """
-    body = {
-        "model": "gpt-oss-20b",
-        "messages": messages,
-        "temperature": temperature,
-        "chat_template_kwargs": {"reasoning_effort": reasoning_effort},
-    }
+    body = {"messages": messages, "temperature": temperature}
+    if template_kwargs:
+        body["chat_template_kwargs"] = template_kwargs
     if seed is not None:
         body["seed"] = seed
     if max_tokens is not None:
@@ -31,6 +28,12 @@ def chat(messages, reasoning_effort="low", temperature=1.0, seed=None, max_token
     message = data["choices"][0]["message"]
     return {"content": message.get("content") or "", "reasoning": message.get("reasoning_content") or "",
             "usage": data.get("usage", {})}
+
+
+def model():
+    """The name of the model the server is running (serve.ps1's -Model)."""
+    with urllib.request.urlopen(SERVER + "/v1/models", timeout=5) as res:
+        return json.load(res)["data"][0]["id"]
 
 
 def ready():
@@ -45,6 +48,7 @@ def ready():
 if __name__ == "__main__":
     if not ready():
         raise SystemExit(f"No server at {SERVER}; start it with scripts/serve.ps1")
+    print("model:", model())
     reply = chat([{"role": "system", "content": "You are a seller of a used bicycle. Your floor is $120."},
                   {"role": "user", "content": "Would you take $90 for it?"}], seed=0)
     print("reasoning:", reply["reasoning"][:300])

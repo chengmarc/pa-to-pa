@@ -1,4 +1,4 @@
-# persuader
+# persuader-strategies
 
 One file per persuader strategy:
 
