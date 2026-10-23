@@ -167,7 +167,7 @@ function renderHistory(runs) {
 
 function renderDetail(r) {
   if (!r) { $("detail").innerHTML = '<p class="msg">No runs yet.</p>'; return; }
-  const s = r.settings, st = summarize(r), link = f => `/runs/${encodeURIComponent(r.folder)}/${f}`;
+  const s = r.settings, st = summarize(r), link = f => `/results/${encodeURIComponent(r.folder)}/${f}`;
   const rows = Object.entries(r.results).sort(([a], [b]) => a.localeCompare(b)).map(([p, o]) => {
     const result = o.error ? `<span class="err">${esc(o.error)}</span>`
       : !o.deal ? `<span class="nodeal">no deal</span>`
@@ -187,7 +187,7 @@ function renderDetail(r) {
       <div class="stat"><b>${st.breaches}</b><span>below floor</span></div>
       <div class="stat"><b>${st.errors}</b><span>errors</span></div>
     </div>
-    <div class="msg">Logs: <code>appdata/runs/${esc(r.folder)}/</code></div>
+    <div class="msg">Logs: <code>appdata/results/${esc(r.folder)}/</code></div>
     <div class="table-wrap"><table>
       <thead><tr><th>Persona</th><th>Case</th><th>Price</th><th>Advance</th><th>Messages</th><th>Log</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;

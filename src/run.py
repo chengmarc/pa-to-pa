@@ -4,7 +4,7 @@ persuadee tier, persuader model and persuadee model. The runs page (pa2pa-ui) st
     pa2pa-run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
-Each run gets a folder appdata/runs/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
+Each run gets a folder appdata/results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
 <persona>.md (the readable transcript) and <persona>.json (the full record, with reasoning and rejected attempts).
 Each persona always gets the same case: the cases are dealt out over the personas in order (p_01 the first case, p_02
 the second, ...), so runs compare persona by persona.
@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from . import game, llm
-from .paths import CONTEXT, RUNS, SRC
+from .paths import CONTEXT, RESULTS, SRC
 
 SETTINGS = ["scenario", "strategy", "tier", "persuader_model", "persuadee_model"]
 LABELS = {k: v for k, v in json.loads((SRC / "labels.json").read_text(encoding="utf-8")).items()
@@ -67,7 +67,7 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
     personas, persona_traits = names("persuadee-personas"), traits()
     model = {"persuader": s["persuader_model"], "persuadee": s["persuadee_model"]}
 
-    folder = RUNS / (time.strftime("%Y%m%d-%H%M%S") + "_" + "_".join(
+    folder = RESULTS / (time.strftime("%Y%m%d-%H%M%S") + "_" + "_".join(
         [s["scenario"], s["strategy"], s["tier"], s["persuader_model"], "vs", s["persuadee_model"]]))
     folder.mkdir(parents=True)
     run = {"settings": s, "seed": seed, "max_turns": max_turns, "guard": guard, "games": len(personas),

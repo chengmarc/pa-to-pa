@@ -4,4 +4,4 @@ from pathlib import Path
 
 SRC = Path(__file__).resolve().parent
 CONTEXT = SRC.parent / "context"
-RUNS = SRC.parent / "appdata" / "runs"
+RESULTS = SRC.parent / "appdata" / "results"

@@ -31,7 +31,7 @@ persuader model and persuadee model. The page starts them, and so does the comma
 pa2pa-run --strategy sy_voss --tier t2_secretary [--scenario d1_secondhand] [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
 ```
 
-Each run writes `appdata/runs/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
+Each run writes `appdata/results/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
 persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and rejected
 attempts). The page lists past runs and links every transcript. Each persona always gets the same case (the cases
 are dealt out over the personas in order), so runs compare persona by persona. A run takes ~15 minutes on Qwen
@@ -84,5 +84,5 @@ Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first. A hosted OpenAI-compat
 | `scripts/` | `start.ps1` (what `pa2pa-ui.cmd` runs), `fetch.ps1` (downloads), `serve.ps1` (model server) | yes |
 | `pa2pa-ui.cmd` | the double-click entry point | yes |
 | `docs/notes/` | working notes and decisions | yes |
-| `appdata/` | what runs write: `runs/`, and the model servers' `logs/` | no |
+| `appdata/` | what runs write: `results/`, and the model servers' `logs/` | no |
 | `build/` | unfinished downloads | no |

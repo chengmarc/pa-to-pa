@@ -2,7 +2,7 @@
 
     pa2pa-ui                         # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as pa2pa-run's, logged to appdata/runs/.
+One run at a time. Runs are the same as pa2pa-run's, logged to appdata/results/.
 """
 import json
 import threading
@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from . import run
+from .paths import RESULTS
 
 ADDRESS = ("127.0.0.1", 8090)
 PAGE = Path(__file__).with_name("ui.html")
@@ -21,7 +22,7 @@ state = {"busy": False, "error": None}   # the run in progress, if any, and why 
 def runs():
     """Every run's run.json, newest first, with its folder name."""
     found = []
-    for path in sorted(run.RUNS.glob("*/run.json"), reverse=True):
+    for path in sorted(RESULTS.glob("*/run.json"), reverse=True):
         try:
             found.append({"folder": path.parent.name, **json.loads(path.read_text(encoding="utf-8"))})
         except (OSError, json.JSONDecodeError):
@@ -59,11 +60,11 @@ class Handler(BaseHTTPRequestHandler):
             self.send(200, run.options())
         elif self.path == "/api/state":
             self.send(200, {**state, "runs": runs()})
-        elif self.path.startswith("/runs/"):
-            # /runs/<folder>/<file>: a log, only from inside appdata/runs
+        elif self.path.startswith("/results/"):
+            # /results/<folder>/<file>: a log, only from inside appdata/results
             parts = self.path.split("/")[2:]
-            path = run.RUNS.joinpath(*parts).resolve() if len(parts) == 2 else None
-            if path and path.parent.parent == run.RUNS.resolve() and path.suffix in (".md", ".json") and path.is_file():
+            path = RESULTS.joinpath(*parts).resolve() if len(parts) == 2 else None
+            if path and path.parent.parent == RESULTS.resolve() and path.suffix in (".md", ".json") and path.is_file():
                 self.send(200, path.read_bytes(), "text/plain; charset=utf-8")
             else:
                 self.send(404, {"error": "no such log"})
