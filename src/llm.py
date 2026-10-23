@@ -25,7 +25,7 @@ def _request(model, path, body=None, timeout=600):
 
 def chat(model, messages, temperature=0.7, seed=None, max_tokens=None, timeout=600):
     """One chat completion from the named model. Returns {"content", "reasoning", "usage"}.
-    The model's template_kwargs (e.g. Qwen3.5 enable_thinking, gpt-oss reasoning_effort) go with every request."""
+    The model's template_kwargs (e.g. Qwen3.5's enable_thinking) go with every request."""
     m = models()[model]
     body = {"model": m.get("model", model), "messages": messages, "temperature": temperature}
     if m.get("template_kwargs"):

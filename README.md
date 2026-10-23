@@ -61,17 +61,14 @@ Every setting's ids and display labels are in `src/labels.json`:
 
 ## Models
 
-`src/models.json` lists the models a run can use, by name and address. Two are local, served by llama.cpp b10434 (the
-CUDA 12.4 build on Windows, the Metal build on macOS) with an OpenAI-compatible API, each on its own port. Their
-files, download links and server settings are in their `local` blocks there:
+`src/models.json` lists the models a run can use, by name and address. One is local: `qwen3.5-9b`, Qwen3.5-9B Q4_K_M
+(5.3 GB), served by llama.cpp b10434 (the CUDA 12.4 build on Windows, the Metal build on macOS) with an
+OpenAI-compatible API on port 8081, entirely on the GPU with 4 slots of 8k tokens. Its file, download link and server
+settings are in its `local` block there. On an RTX 5060 Laptop (8 GB) it generates 56 tok/s alone and 129 tok/s over
+4 games; it uses ~7.5 GB of VRAM, so close GPU-heavy apps first.
 
-| `serve` model | File | Port | Runs | Speed on an RTX 5060 Laptop (8 GB) |
-|---|---|---|---|---|
-| `qwen3.5-9b` (default) | Qwen3.5-9B Q4_K_M, 5.3 GB | 8081 | entirely on the GPU, 4 slots of 8k | 56 tok/s alone, 129 tok/s over 4 games |
-| `gpt-oss-20b` | gpt-oss-20b MXFP4, 12 GB | 8082 | split GPU/RAM, 8 slots of 8k | 23 tok/s alone, 54 tok/s over 8 games |
-
-Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first. A hosted OpenAI-compatible API can be added to
-`models.json` with `api_key_env` (the environment variable holding its key) and `model` (its own model id).
+A hosted OpenAI-compatible API can be added to `models.json` with `api_key_env` (the environment variable holding its
+key) and `model` (its own model id).
 
 ## Layout
 

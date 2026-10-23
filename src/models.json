@@ -12,18 +12,5 @@
       "placement": ["-ngl", "99", "--fit", "off"],
       "_placement": "every layer on the GPU: llama.cpp's own fitter keeps ~1 GB spare and would leave some in RAM, at a quarter of the speed. ~7.5 GB of an 8 GB GPU."
     }
-  },
-  "gpt-oss-20b": {
-    "url": "http://127.0.0.1:8082/v1",
-    "template_kwargs": {"reasoning_effort": "low"},
-    "local": {
-      "file": "gpt-oss-20b-mxfp4.gguf",
-      "download": "https://huggingface.co/ggml-org/gpt-oss-20b-GGUF/resolve/ef9b12f2ff56c69cf32153a02784e7a3c88bf524/gpt-oss-20b-MXFP4.gguf",
-      "size": 12109566624,
-      "context": 65536,
-      "parallel": 8,
-      "placement": ["--fit", "on", "--load-mode", "mmap"],
-      "_placement": "12 GB: llama.cpp splits it between GPU and RAM to fit the memory free right now."
-    }
   }
 }
