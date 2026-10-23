@@ -188,12 +188,15 @@ function summarize(r) {
   };
 }
 
+// a run's name: scenario · persuader strategy · persuadee strategy, by their labels
+const title = s => [lab("scenario", s.scenario), lab("strategy", s.strategy), lab("tier", s.tier)].map(esc).join(" · ");
+
 function renderHistory(runs) {
   $("history").innerHTML = runs.length ? runs.map(r => {
     const s = r.settings, st = summarize(r);
     const status = r.status === "running" ? (busy ? `running ${st.done}/${r.games}` : "interrupted") : `${st.deals}/${r.games} deals`;
     return `<button data-folder="${esc(r.folder)}" class="${r.folder === shown ? "on" : ""}">
-      ${esc(lab("strategy", s.strategy))} · ${esc(lab("tier", s.tier))}<small>${esc(lab("scenario", s.scenario))} · ${esc(lab("persuader_model", s.persuader_model))} vs ${esc(lab("persuadee_model", s.persuadee_model))}</small>
+      ${title(s)}<small>${esc(lab("persuader_model", s.persuader_model))} vs ${esc(lab("persuadee_model", s.persuadee_model))}</small>
       <small>${esc(r.started)} · ${status}</small></button>`;
   }).join("") : '<p class="msg">No runs yet.</p>';
   for (const b of $("history").querySelectorAll("button")) b.onclick = () => { shown = b.dataset.folder; render(); };
@@ -211,7 +214,7 @@ function renderDetail(r) {
       <td><a href="${link(p + ".md")}" target="_blank">transcript</a> · <a href="${link(p + ".json")}" target="_blank">json</a></td></tr>`;
   }).join("");
   $("detail").innerHTML = `
-    <strong>${esc(lab("strategy", s.strategy))} · ${esc(lab("tier", s.tier))} · ${esc(lab("scenario", s.scenario))}</strong>
+    <strong>${title(s)}</strong>
     <div class="msg">${esc(lab("persuader_model", s.persuader_model))} (persuader) vs ${esc(lab("persuadee_model", s.persuadee_model))} (persuadee) · started ${esc(r.started)}</div>
     <div class="bar"><div style="width:${100 * st.done / r.games}%"></div></div>
     <div class="stats">
