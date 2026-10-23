@@ -57,7 +57,8 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
     """Plays the run and returns its folder. on_game(record) is called as each game finishes."""
     s = settings
     if not (CONTEXT / "scenarios" / s["scenario"] / "cases.json").exists():
-        raise RuntimeError(f"{label('scenario', s['scenario'])} isn't built yet: add context\\scenarios\\{s['scenario']}\\")
+        raise RuntimeError(f"{label('scenario', s['scenario'])} isn't built yet: "
+                           f"add context\\scenarios\\{s['scenario']}\\")
     for name in ("persuader_model", "persuadee_model"):
         if not llm.ready(s[name]):
             raise RuntimeError(f"{s[name]} isn't reachable; start it with scripts\\serve.ps1 -Model {s[name]}")
