@@ -40,11 +40,16 @@ settings fixed: scenario, persuader strategy, persuadee tier, persuader model an
 them, and so does `python main.pyw run`, which also takes `--scenario`, `--persuader-model` and `--persuadee-model`
 (default `d1_secondhand` and `qwen3.5-9b`).
 
-Each run writes `results/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
-persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and rejected
-attempts). The page lists past runs and links every transcript. Each persona always gets the same case (the cases
-are dealt out over the personas in order), so runs compare persona by persona. A run takes ~15 minutes on Qwen
-locally.
+Each run writes a folder in `results/`, named as the page names it, then the models, then when it started:
+
+```
+results/Secondhand Item - Voss - Personalized - Qwen3.5-9B (Local) vs Qwen3.5-9B (Local) - 2026-10-23 14.36.33/
+```
+
+It holds `run.json` (settings, each persona's outcome, summary) and, per persona, `<persona>.md` (the readable
+transcript) and `<persona>.json` (the full record, with reasoning and rejected attempts). The page lists past runs,
+newest first, and links every transcript. Each persona always gets the same case (the cases are dealt out over the
+personas in order), so runs compare persona by persona. A run takes about 20 seconds per persona on Qwen locally.
 
 How a game works (`src/game.py`, prompts in `context/scenarios/<scenario>/`):
 

@@ -4,14 +4,16 @@ persuadee tier, persuader model and persuadee model. The runs page (python main.
     python main.pyw run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
-Each run gets a folder results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
-<persona>.md (the readable transcript) and <persona>.json (the full record, with reasoning and rejected attempts).
+Each run gets a folder in results/, named by its settings and when it started (folder_name), with run.json (settings,
+progress, summary) and, per persona, <persona>.md (the readable transcript) and <persona>.json (the full record, with
+reasoning and rejected attempts).
 Each persona always gets the same case: the cases are dealt out over the personas in order (p_01 the first case, p_02
 the second, ...), so runs compare persona by persona.
 """
 import argparse
 import csv
 import json
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -56,6 +58,17 @@ def traits():
         return {row.pop("id"): row for row in csv.DictReader(f)}
 
 
+def folder_name(settings, started):
+    """A run's folder in results/: the labels as the page shows them, then the models, then when it started, e.g.
+    "Secondhand Item - Voss - Personalized - Qwen3.5-9B (Local) vs Qwen3.5-9B (Local) - 2026-10-23 14.36.33".
+    The time has dots, not colons, which Windows doesn't allow in names; so is anything else it doesn't allow."""
+    s = settings
+    parts = [label("scenario", s["scenario"]), label("strategy", s["strategy"]), label("tier", s["tier"]),
+             f"{llm.label(s['persuader_model'])} vs {llm.label(s['persuadee_model'])}",
+             time.strftime("%Y-%m-%d %H.%M.%S", started)]
+    return re.sub(r'[\\/:*?"<>|]', "-", " - ".join(parts))
+
+
 def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
     """Plays the run and returns its folder. on_game(record) is called as each game finishes."""
     s = settings
@@ -70,11 +83,11 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
     personas, persona_traits = names("persuadee-personas"), traits()
     model = {"persuader": s["persuader_model"], "persuadee": s["persuadee_model"]}
 
-    folder = RESULTS / (time.strftime("%Y%m%d-%H%M%S") + "_" + "_".join(
-        [s["scenario"], s["strategy"], s["tier"], s["persuader_model"], "vs", s["persuadee_model"]]))
+    started = time.localtime()
+    folder = RESULTS / folder_name(s, started)
     folder.mkdir(parents=True)
     run = {"settings": s, "seed": seed, "max_turns": max_turns, "guard": guard, "games": len(personas),
-           "status": "running", "started": time.strftime("%Y-%m-%d %H:%M:%S"), "results": {}}
+           "status": "running", "started": time.strftime("%Y-%m-%d %H:%M:%S", started), "results": {}}
     lock = threading.Lock()
 
     def save():

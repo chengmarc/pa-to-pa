@@ -13,6 +13,7 @@ import json
 import threading
 import time
 import traceback
+import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -65,14 +66,14 @@ def options():
 
 
 def runs():
-    """Every run's run.json, newest first, with its folder name."""
+    """Every run's run.json, with its folder name, newest first (by when it started: folders are named by settings)."""
     found = []
-    for path in sorted(RESULTS.glob("*/run.json"), reverse=True):
+    for path in RESULTS.glob("*/run.json"):
         try:
             found.append({"folder": path.parent.name, **json.loads(path.read_text(encoding="utf-8"))})
         except (OSError, json.JSONDecodeError):
             pass   # being written right now; it shows on the next poll
-    return found
+    return sorted(found, key=lambda r: r.get("started", ""), reverse=True)
 
 
 def launch(settings):
@@ -108,7 +109,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send(200, {**state, "runs": runs()})
         elif self.path.startswith("/results/"):
             # /results/<folder>/<file>: a log, only from inside results
-            parts = self.path.split("/")[2:]
+            parts = [urllib.parse.unquote(p) for p in self.path.split("/")[2:]]   # folder names have spaces
             path = RESULTS.joinpath(*parts).resolve() if len(parts) == 2 else None
             if path and path.parent.parent == RESULTS.resolve() and path.suffix in (".md", ".json") and path.is_file():
                 self.send(200, path.read_bytes(), "text/plain; charset=utf-8")
