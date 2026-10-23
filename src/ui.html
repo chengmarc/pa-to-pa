@@ -51,7 +51,7 @@
   button.run:disabled { opacity: .5; cursor: not-allowed; }
   .msg { color: var(--muted); }
   .msg.error { color: var(--bad); }
-  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  .layout { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
   @media (max-width: 760px) { .layout, .group { grid-template-columns: 1fr; } }
   .history { max-height: 640px; overflow: auto; padding: 0; }
   .history h2 { margin: 0; padding: 12px 14px 8px; font-size: 12px; font-weight: 600; letter-spacing: .04em;
@@ -60,8 +60,10 @@
                     background: none; color: var(--text); padding: 10px 14px; font: inherit; cursor: pointer; }
   .history button:hover { background: var(--pill); }
   .history button.on { background: var(--pill); box-shadow: inset 3px 0 var(--accent); }
-  .history .name { font-weight: 600; line-height: 1.35; }
-  .history .meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .history .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  .history .tag { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 0 7px;
+                  font-size: 11.5px; line-height: 1.6; white-space: nowrap; }
+  .history .meta { color: var(--muted); font-size: 12.5px; }
   .history .row { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12.5px;
                   margin-top: 4px; font-variant-numeric: tabular-nums; }
   .history .row .when { white-space: nowrap; }
@@ -203,19 +205,17 @@ const title = s => [lab("scenario", s.scenario), lab("strategy", s.strategy), la
 const when = t => new Date(t.replace(" ", "T")).toLocaleString(undefined,
   {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false});
 
-// the models of a run: once if both sides use the same one
-const models = s => s.persuader_model === s.persuadee_model ? lab("persuader_model", s.persuader_model)
-  : `${lab("persuader_model", s.persuader_model)} vs ${lab("persuadee_model", s.persuadee_model)}`;
-
-// Past runs, one entry each: what differs between runs first (the strategies), then scenario and model, then results.
+// Past runs, one entry each: the three settings as tags, the two models, then results and when.
 function renderHistory(runs) {
   $("history").innerHTML = `<h2>Past runs${runs.length ? ` · ${runs.length}` : ""}</h2>` + (runs.length ? runs.map(r => {
     const s = r.settings, st = summarize(r);
     const result = r.status !== "running" ? `${st.deals}/${r.games} deals · advance ${num(st.advance)}`
       : busy ? `<span class="running">Running ${st.done}/${r.games}</span>` : "Interrupted";
     return `<button data-folder="${esc(r.folder)}" class="${r.folder === shown ? "on" : ""}">
-      <div class="name">${esc(lab("strategy", s.strategy))} · ${esc(lab("tier", s.tier))}</div>
-      <div class="meta">${esc(lab("scenario", s.scenario))} · ${esc(models(s))}</div>
+      <div class="tags">${[lab("scenario", s.scenario), lab("strategy", s.strategy), lab("tier", s.tier)]
+        .map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+      <div class="meta">Persuader: ${esc(lab("persuader_model", s.persuader_model))}</div>
+      <div class="meta">Persuadee: ${esc(lab("persuadee_model", s.persuadee_model))}</div>
       <div class="row"><span>${result}</span><span class="when">${esc(when(r.started))}</span></div></button>`;
   }).join("") : '<p class="msg">No runs yet.</p>');
   for (const b of $("history").querySelectorAll("button")) b.onclick = () => { shown = b.dataset.folder; render(); };
