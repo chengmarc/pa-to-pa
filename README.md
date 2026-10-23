@@ -6,30 +6,31 @@ and logs every transcript.
 
 ## Quick start
 
-Needs Windows, an NVIDIA GPU with 6 GB+ of VRAM and a CUDA 12.4+ driver, and Python 3.11+.
+Needs Python 3.11+ and nothing else installed: the app is standard library only. Windows needs an NVIDIA GPU with
+6 GB+ of VRAM and a CUDA 12.4+ driver; macOS runs the models on Apple's GPU (Metal), best on Apple silicon.
 
-**Double-click `pa2pa-ui.cmd`.** It does what's missing and opens the runs page at `http://127.0.0.1:8090`: the
-first time it downloads llama.cpp and the models into `runtime\` (~19 GB) and installs the `pa2pa` package; every
-time it starts the Qwen3.5-9B server in its own minimised window, if it isn't running, and waits for it to load.
-Pick five settings and press Run. Closing the page's window stops the page; the model server keeps running.
+```
+python pa-to-pa.py          # python3 on macOS; on Windows, double-clicking pa-to-pa.py does the same
+```
 
-The same steps by hand (`scripts\start.ps1` runs them):
+It does what's missing and opens the runs page at `http://127.0.0.1:8090`: the first time, it downloads this
+platform's llama.cpp and the models into `runtime/` (~19 GB, resumes if interrupted); every time, it starts the
+Qwen3.5-9B server in the background if it isn't running (on Windows, in its own minimised window) and waits for it to
+load. Pick five settings and press Run. Ctrl+C or closing the window stops the page; the model server keeps running.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1   # llama.cpp and the models into runtime\
-pip install -e .                                             # the pa2pa-ui and pa2pa-run commands
-powershell -ExecutionPolicy Bypass -File scripts\serve.ps1   # Qwen3.5-9B on port 8081; Ctrl+C stops it
-pa2pa-ui                                                     # the runs page, in a second terminal
+The other commands:
+
+```
+python pa-to-pa.py run --strategy sy_voss --tier t2_secretary   # a run from the command line (run --help)
+python pa-to-pa.py serve [model]                                # a model server in this window, until Ctrl+C
+python pa-to-pa.py fetch                                        # just the downloads
 ```
 
 ## Runs
 
 A **run** plays one game per persona (45) with five settings fixed: scenario, persuader strategy, persuadee tier,
-persuader model and persuadee model. The page starts them, and so does the command line:
-
-```powershell
-pa2pa-run --strategy sy_voss --tier t2_secretary [--scenario d1_secondhand] [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
-```
+persuader model and persuadee model. The page starts them, and so does `python pa-to-pa.py run`, which also takes
+`--scenario`, `--persuader-model` and `--persuadee-model` (default `d1_secondhand` and `qwen3.5-9b`).
 
 Each run writes `appdata/results/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
 persona, `<persona>.md` (the readable transcript) and `<persona>.json` (the full record, with reasoning and rejected
@@ -60,29 +61,28 @@ Every setting's ids and display labels are in `src/labels.json`:
 
 ## Models
 
-`src/models.json` lists the models a run can use, by name and address. Two are local, served by llama.cpp b10434
-(CUDA 12.4 build) with an OpenAI-compatible API, each on its own port:
+`src/models.json` lists the models a run can use, by name and address. Two are local, served by llama.cpp b10434 (the
+CUDA 12.4 build on Windows, the Metal build on macOS) with an OpenAI-compatible API, each on its own port. Their
+files, download links and server settings are in their `local` blocks there:
 
-| `serve.ps1 -Model` | File | Port | Runs | Speed on an RTX 5060 Laptop (8 GB) |
+| `serve` model | File | Port | Runs | Speed on an RTX 5060 Laptop (8 GB) |
 |---|---|---|---|---|
 | `qwen3.5-9b` (default) | Qwen3.5-9B Q4_K_M, 5.3 GB | 8081 | entirely on the GPU, 4 slots of 8k | 56 tok/s alone, 129 tok/s over 4 games |
 | `gpt-oss-20b` | gpt-oss-20b MXFP4, 12 GB | 8082 | split GPU/RAM, 8 slots of 8k | 23 tok/s alone, 54 tok/s over 8 games |
 
 Qwen uses ~7.5 GB of VRAM, so close GPU-heavy apps first. A hosted OpenAI-compatible API can be added to
 `models.json` with `api_key_env` (the environment variable holding its key) and `model` (its own model id).
-`python -m pa2pa.llm [model]` is a smoke test.
 
 ## Layout
 
 | Path | Holds | In git |
 |---|---|---|
-| `src/` | the app, the `pa2pa` package: model client, game engine, runner, runs page; `models.json` and `labels.json` | yes |
+| `pa-to-pa.py` | the entry point: loads `src/` as the `pa2pa` package and runs a command | yes |
+| `src/` | the app, the `pa2pa` package: commands, runtime (downloads, model servers), model client, game engine, runner, runs page; `models.json` and `labels.json` | yes |
 | `context/scenarios/` | per scenario: the two prompts and the cases | yes |
 | `context/persuader-strategies/` | the persuader strategies | yes |
 | `context/persuadee-personas/` | the principal personas, and their traits in `index.csv` | yes |
-| `runtime/` | llama.cpp and the models, fetched by `scripts/fetch.ps1` | no |
-| `scripts/` | `start.ps1` (what `pa2pa-ui.cmd` runs), `fetch.ps1` (downloads), `serve.ps1` (model server) | yes |
-| `pa2pa-ui.cmd` | the double-click entry point | yes |
+| `runtime/` | llama.cpp and the models, fetched by `python pa-to-pa.py fetch` | no |
 | `docs/notes/` | working notes and decisions | yes |
 | `appdata/` | what runs write: `results/`, and the model servers' `logs/` | no |
 | `build/` | unfinished downloads | no |

@@ -1,11 +1,7 @@
-"""Minimal client for the models in models.json: local llama-servers (scripts/serve.ps1) or hosted OpenAI-compatible
-APIs. Standard library only.
-
-    python -m pa2pa.llm [model]      # smoke test: one short exchange (default qwen3.5-9b)
-"""
+"""Minimal client for the models in models.json: local llama-servers (python pa-to-pa.py serve) or hosted
+OpenAI-compatible APIs. Standard library only."""
 import json
 import os
-import sys
 import urllib.request
 
 from .paths import SRC
@@ -57,13 +53,3 @@ def ready(model):
     except OSError:
         return False
 
-
-if __name__ == "__main__":
-    name = sys.argv[1] if len(sys.argv) > 1 else "qwen3.5-9b"
-    if not ready(name):
-        raise SystemExit(f"{name} isn't reachable at {models()[name]['url']}; start it with scripts/serve.ps1")
-    reply = chat(name, [{"role": "system", "content": "You are a seller of a used bicycle. Your floor is $120."},
-                        {"role": "user", "content": "Would you take $90 for it?"}], seed=0)
-    print("reasoning:", reply["reasoning"][:300])
-    print("content:", reply["content"])
-    print("usage:", reply["usage"])

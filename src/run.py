@@ -1,7 +1,7 @@
 """One run: every persona plays one game, with five settings fixed for the run: scenario, persuader strategy,
-persuadee tier, persuader model and persuadee model. The runs page (pa2pa-ui) starts runs too.
+persuadee tier, persuader model and persuadee model. The runs page (python pa-to-pa.py) starts runs too.
 
-    pa2pa-run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
+    python pa-to-pa.py run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
 Each run gets a folder appdata/results/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
@@ -61,7 +61,7 @@ def start(settings, workers=4, seed=0, max_turns=20, guard=False, on_game=None):
                            f"add context\\scenarios\\{s['scenario']}\\")
     for name in ("persuader_model", "persuadee_model"):
         if not llm.ready(s[name]):
-            raise RuntimeError(f"{s[name]} isn't reachable; start it with scripts\\serve.ps1 -Model {s[name]}")
+            raise RuntimeError(f"{s[name]} isn't reachable; start it with python pa-to-pa.py serve {s[name]}")
     config = game.load(s["scenario"])
     strategy = (CONTEXT / "persuader-strategies" / f"{s['strategy']}.md").read_text(encoding="utf-8")
     personas, persona_traits = names("persuadee-personas"), traits()
@@ -145,18 +145,19 @@ def transcript(record, config):
     return "\n".join(lines) + "\n"
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="pa-to-pa.py run", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scenario", default="d1_secondhand", choices=list(LABELS["scenario"]))
     ap.add_argument("--strategy", required=True, choices=list(LABELS["strategy"]))
     ap.add_argument("--tier", required=True, choices=TIERS)
     ap.add_argument("--persuader-model", default="qwen3.5-9b", help="a models.json name")
     ap.add_argument("--persuadee-model", default="qwen3.5-9b", help="a models.json name")
-    ap.add_argument("--workers", type=int, default=4, help="games at once; match serve.ps1's slots")
+    ap.add_argument("--workers", type=int, default=4, help="games at once; match the model server's slots")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-turns", type=int, default=20, help="messages before it ends with no deal")
     ap.add_argument("--guard", action="store_true", help="enforce the persuadee's floor in code too")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     settings = {k: getattr(args, k) for k in SETTINGS}
 
     def show(r):
@@ -170,6 +171,3 @@ def main():
         raise SystemExit(str(e))
     print(f"\n{json.loads((folder / 'run.json').read_text(encoding='utf-8'))['summary']}\nLogs: {folder}")
 
-
-if __name__ == "__main__":
-    main()

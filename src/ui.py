@@ -1,8 +1,8 @@
 """A local page for starting runs and reading their logs: pick the five settings, press Run.
 
-    pa2pa-ui                         # opens http://127.0.0.1:8090
+    python pa-to-pa.py                  # opens http://127.0.0.1:8090
 
-One run at a time. Runs are the same as pa2pa-run's, logged to appdata/results/.
+One run at a time. Runs are the same as python pa-to-pa.py run's, logged to appdata/results/.
 """
 import json
 import threading
@@ -100,6 +100,3 @@ def main():
     except KeyboardInterrupt:
         pass
 
-
-if __name__ == "__main__":
-    main()

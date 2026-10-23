@@ -1,11 +1,29 @@
 {
-  "_note": "Models a run can use, by name. url: an OpenAI-compatible API base. template_kwargs: chat-template variables sent with every request (the thinking switch). A hosted API also needs api_key_env (the environment variable holding its key) and model (its own model id).",
+  "_note": "Models a run can use, by name. url: an OpenAI-compatible API base. template_kwargs: chat-template variables sent with every request (the thinking switch). A hosted API also needs api_key_env (the environment variable holding its key) and model (its own model id). local: a model served from runtime/ (python pa-to-pa.py serve), which listens on url's port: its file, where python pa-to-pa.py fetch downloads it from (pinned to one revision) and its size, the context and slots it's served with, and llama-server's placement arguments.",
   "qwen3.5-9b": {
     "url": "http://127.0.0.1:8081/v1",
-    "template_kwargs": {"enable_thinking": false}
+    "template_kwargs": {"enable_thinking": false},
+    "local": {
+      "file": "qwen3.5-9b-q4_k_m.gguf",
+      "download": "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q4_K_M.gguf",
+      "size": 5680522464,
+      "context": 32768,
+      "parallel": 4,
+      "placement": ["-ngl", "99", "--fit", "off"],
+      "_placement": "every layer on the GPU: llama.cpp's own fitter keeps ~1 GB spare and would leave some in RAM, at a quarter of the speed. ~7.5 GB of an 8 GB GPU."
+    }
   },
   "gpt-oss-20b": {
     "url": "http://127.0.0.1:8082/v1",
-    "template_kwargs": {"reasoning_effort": "low"}
+    "template_kwargs": {"reasoning_effort": "low"},
+    "local": {
+      "file": "gpt-oss-20b-mxfp4.gguf",
+      "download": "https://huggingface.co/ggml-org/gpt-oss-20b-GGUF/resolve/ef9b12f2ff56c69cf32153a02784e7a3c88bf524/gpt-oss-20b-MXFP4.gguf",
+      "size": 12109566624,
+      "context": 65536,
+      "parallel": 8,
+      "placement": ["--fit", "on", "--load-mode", "mmap"],
+      "_placement": "12 GB: llama.cpp splits it between GPU and RAM to fit the memory free right now."
+    }
   }
 }

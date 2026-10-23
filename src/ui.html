@@ -94,7 +94,7 @@ const kind = key => key.endsWith("_model") ? "model" : key;
 const find = (key, id) => options && (options[kind(key)] || []).find(o => o.id === id);
 const lab = (key, id) => (find(key, id) || {label: id}).label;   // a run from before a rename shows its id
 const WHY_OFF = {
-  model: id => `Not running: start it with scripts\\serve.ps1 -Model ${id}`,
+  model: id => `Not running: start it with python pa-to-pa.py serve ${id}`,
   scenario: id => `Not built yet: add context\\scenarios\\${id}\\`,
   strategy: id => `Not written yet: add context\\persuader-strategies\\${id}.md`,
 };

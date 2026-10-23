@@ -1,16 +1,14 @@
-# Fetched by scripts/fetch.ps1: llama.cpp and the models
+# Fetched by python pa2pa.py fetch: llama.cpp and the models
 /runtime/
 
-# Made by scripts/fetch.ps1 on the way: unfinished downloads
+# Made by python pa2pa.py fetch on the way: unfinished downloads
 /build/
 
-# Written as the app runs: run logs (pa2pa-run, pa2pa-ui) and model-server logs (scripts/serve.ps1)
+# Written as the app runs: run results and model-server logs
 /appdata/
 
 # Python
 __pycache__/
-*.egg-info/
-.venv/
 
 # OS / editor
 .DS_Store
