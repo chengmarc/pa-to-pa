@@ -1,7 +1,7 @@
 """One run: every persona plays one game, with five settings fixed for the run: scenario, persuader strategy,
 persuadee tier, persuader model and persuadee model. The runs page (pa2pa-ui) starts runs too.
 
-    pa2pa-run --scenario p1_secondhand --strategy sy_voss --tier t2_secretary \
+    pa2pa-run --scenario d1_secondhand --strategy sy_voss --tier t2_secretary \
         --persuader-model qwen3.5-9b --persuadee-model qwen3.5-9b
 
 Each run gets a folder appdata/runs/<time>_<settings>/ with run.json (settings, progress, summary) and, per persona,
@@ -146,7 +146,7 @@ def transcript(record, config):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--scenario", default="p1_secondhand", choices=list(LABELS["scenario"]))
+    ap.add_argument("--scenario", default="d1_secondhand", choices=list(LABELS["scenario"]))
     ap.add_argument("--strategy", required=True, choices=list(LABELS["strategy"]))
     ap.add_argument("--tier", required=True, choices=TIERS)
     ap.add_argument("--persuader-model", default="qwen3.5-9b", help="a models.json name")

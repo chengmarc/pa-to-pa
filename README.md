@@ -28,7 +28,7 @@ A **run** plays one game per persona (45) with five settings fixed: scenario, pe
 persuader model and persuadee model. The page starts them, and so does the command line:
 
 ```powershell
-pa2pa-run --strategy sy_voss --tier t2_secretary [--scenario p1_secondhand] [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
+pa2pa-run --strategy sy_voss --tier t2_secretary [--scenario d1_secondhand] [--persuader-model qwen3.5-9b] [--persuadee-model qwen3.5-9b]
 ```
 
 Each run writes `appdata/runs/<time>_<settings>/`: `run.json` (settings, each persona's outcome, summary) and, per
@@ -54,7 +54,7 @@ Every setting's ids and display labels are in `src/labels.json`:
 
 | Setting | Values (id: label) |
 |---|---|
-| Scenario | `p1_secondhand`: Secondhand Item · `p2_salary`: Base Salary (not built yet) · `p3_total_comp`: Total Compensation (not built yet) |
+| Scenario | `d1_secondhand`: Secondhand Item · `d2_salary`: Base Salary (not built yet) · `d3_total_comp`: Total Compensation (not built yet) |
 | Persuader strategy | `s0_none`: None · `s1_generic`: Generic · `sx_fisher_ury`: Fisher-Ury · `sy_voss`: Voss |
 | Persuadee strategy | `t1_vanilla`: Not Personalized · `t2_secretary`: Personalized |
 
