@@ -23,7 +23,7 @@ gpt-oss-20b (MXFP4 GGUF) served by llama.cpp b10434 (CUDA 12.4 build), the same 
 runtime are not in git; on a fresh clone, download them once (~13 GB):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scriptsetch.ps1
+powershell -ExecutionPolicy Bypass -File scripts\fetch.ps1
 ```
 
 Start the server (OpenAI-compatible API at `http://127.0.0.1:8081/v1`; Ctrl+C stops it):
